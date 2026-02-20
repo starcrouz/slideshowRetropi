@@ -1,55 +1,53 @@
-# Bartop Slideshow Photo Selector
+# SlideshowRecalbox
 
-A Node.js script that automatically selects, resizes, and processes photos (including HEIC) for a Bartop Raspberry Pi slideshow. 
+A multi-platform project to manage and display a high-quality photo slideshow on a Recalbox-powered Bartop.
 
-This project is designed to run periodically (e.g., hourly) to refresh the selection of photos shown on a Recalbox/Raspberry Pi screensaver.
+The project consists of two parts:
+1. **Photo Selector (Node.js)**: Runs on your PC to select, resize, and prepare photos.
+2. **Slideshow Display (Python/Pygame)**: Runs on the Raspberry Pi (Recalbox) to display the photos with a Ken Burns animation.
 
-## Features
+---
 
-- **Smart Selection**: Picks 100 random photos from a large collection.
-- **HEIC Support**: Automatically handle and convert iPhone (HEIC) photos to JPEG.
-- **Auto-labeling**:
-  - Extracts EXIF data (Date and GPS) when available.
-  - Reverse-geocodes GPS coordinates to city names.
-  - Fallbacks to folder names (excluding generic names like "DCIM", "Apple", etc.) to extract meaningful descriptions and dates.
-- **CPU Efficient**: Processes images sequentially to maintain system performance on the host PC.
-- **Optimized for Bartop**: Resizes images to a configurable resolution (default 1280x1024) to reduce the processing load on the Raspberry Pi.
+## 1. Photo Selector (PC / Node.js)
 
-## Installation
+Automatically selects, resizes, and processes photos (JPG, HEIC) from your library to keep the bartop's storage efficient and responsive.
 
-1. Clone this repository:
+### Features
+- **Smart Selection**: Picks 100 random photos from your collection.
+- **HEIC Support**: Converts iPhone photos to JPEG on-the-fly.
+- **Auto-labeling**: Extracts EXIF data and reverse-geocodes locations.
+- **CPU Efficient**: Sequential processing to avoid background lag.
+
+### Usage
+1. Install dependencies: `npm install`
+2. Configure your paths in `config.json`.
+3. Run: `node index.js`
+
+---
+
+## 2. Slideshow Display (RPi / Python)
+
+A Python script designed for Recalbox (compatible with Python 2.7 and 3.x) using Pygame to display the prepared photos.
+
+### Features
+- **Ken Burns Effect**: Gentle zoom animation for a dynamic display.
+- **Fade-in**: Smooth transitions between photos.
+- **Metadata Overlay**: Displays the date and location extracted by the Node.js script.
+- **Low Resource**: Optimized to run smoothly on older Raspberry Pi models.
+
+### Installation on Recalbox
+1. Copy the `display/slideshow.py` file to your Recalbox.
+2. Ensure you have Pygame installed (standard on Recalbox).
+3. Run the script:
    ```bash
-   git clone https://github.com/starcrouz/slideshowBartopNodeJS.git
-   cd slideshowBartopNodeJS
+   python display/slideshow.py
    ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+
+---
 
 ## Configuration
 
-Edit [config.json](config.json) to match your setup:
-
-- `SOURCE_DIR`: Path to your photo library (e.g., Google Drive sync folder).
-- `DEST_DIR`: Path to the Bartop's network share or local folder.
-- `NB_IMAGES`: Number of photos to pick (default 100).
-- `SCREEN_W` / `SCREEN_H`: Target resolution for the images.
-- `CITY_OVERRIDES`: Manual map for specific city names.
-
-## Usage
-
-Simply run:
-```bash
-node index.js
-```
-
-The script will:
-1. Scan for `.jpg` and `.heic` files in the source directory.
-2. Select 100 random files.
-3. Process each one: extract metadata, resize, and save to the destination.
-4. Generate a `.txt` file for each photo containing its label (e.g., "Paris - May 2023").
+Edit `config.json` on your PC to set your source/destination folders and screen resolution.
 
 ## License
-
 ISC
