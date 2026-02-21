@@ -57,18 +57,18 @@ def save_settings(settings):
     except Exception:
         pass
 
-def get_sidecar_data(image_path):
-    txt_path = os.path.splitext(image_path)[0] + ".txt"
-    data = {"label": u"", "full_date": u"", "source_path": u""}
+def get_sidecar_data(file_path):
+    """Lit le fichier .txt associé pour obtenir Label, Date/Durée, Source."""
+    txt_path = os.path.splitext(file_path)[0] + ".txt"
+    data = {"label": u"", "info": u"", "source_path": u""}
     if os.path.exists(txt_path):
         try:
             with open(txt_path, 'r') as f:
                 lines = f.readlines()
                 if len(lines) >= 1: data["label"] = lines[0].strip().decode('utf-8', 'ignore')
-                if len(lines) >= 2: data["full_date"] = lines[1].strip().decode('utf-8', 'ignore')
+                if len(lines) >= 2: data["info"] = lines[1].strip().decode('utf-8', 'ignore')
                 if len(lines) >= 3: data["source_path"] = lines[2].strip().decode('utf-8', 'ignore')
-        except Exception:
-            pass
+        except Exception: pass
     return data
 
 def parse_game_metadata(file_path):
@@ -88,13 +88,11 @@ def get_input_devices():
     return glob.glob('/dev/input/event*')
 
 def stop_video(proc):
-    """Tue proprement le processus omxplayer et tout son groupe."""
     if proc:
         try:
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
             proc.wait()
-        except Exception:
-            pass
+        except Exception: pass
 
 def run_slideshow(enable_animation=True):
     os.environ["SDL_VIDEODRIVER"] = "fbcon"
@@ -186,16 +184,13 @@ def run_slideshow(enable_animation=True):
                     while data:
                         _, _, ev_type, ev_code, ev_value = struct.unpack(event_format, data)
                         if ev_type == EV_KEY and ev_value == 1: 
-                            # On ne debug pas le bouton Info ou Mode lui-même
                             if ev_code not in (info_button_code, mode_button_code):
                                 last_detected_code = ev_code
                                 code_timer = now + 4
                             
                             if show_info:
-                                if ev_code == info_button_code: 
-                                    show_info = False
-                                else:
-                                    info_timer = now + INFO_DURATION
+                                if ev_code == info_button_code: show_info = False
+                                else: info_timer = now + INFO_DURATION
                             else:
                                 if ev_code == info_button_code:
                                     if current_mode == MODE_PHOTOS:
@@ -209,7 +204,7 @@ def run_slideshow(enable_animation=True):
                                         if video_proc: 
                                             stop_video(video_proc)
                                             video_proc = None
-                                            need_load = True # Restart avec son/sans son
+                                            need_load = True
                                 elif ev_code == mode_button_code:
                                     current_mode = (current_mode % 3) + 1
                                     all_files = get_files_for_mode(current_mode)
@@ -237,7 +232,6 @@ def run_slideshow(enable_animation=True):
                     running = False
                 
                 if not show_info:
-                    # Vitesse (uniquement en photo)
                     if current_mode == MODE_PHOTOS and now - last_speed_time > 0.15:
                         change = 0
                         if event.type == pygame.JOYAXISMOTION and event.axis == 1:
@@ -252,14 +246,12 @@ def run_slideshow(enable_animation=True):
                             settings["display_time"] = display_time
                             save_settings(settings)
 
-                    # Navigation
                     if now - last_nav_time > 0.4:
                         steer = 0
                         if event.type == pygame.JOYAXISMOTION and event.axis == 0:
                             if abs(event.value) > 0.6: steer = 1 if event.value > 0.6 else -1
                         elif event.type == pygame.JOYHATMOTION and event.value[0] != 0:
                             steer = event.value[0]
-                        
                         if steer != 0:
                             current_idx_ptr = (current_idx_ptr + steer) % len(indices)
                             need_load = True
@@ -299,7 +291,7 @@ def run_slideshow(enable_animation=True):
                         zoom_factor = 1.0; alpha = 0; need_load = False; last_switch = now
                     except Exception: current_idx_ptr = (current_idx_ptr + 1) % len(indices)
                 else:
-                    # VIDEO - On laisse 60px en bas pour le texte
+                    # VIDEO
                     screen.fill((0, 0, 0))
                     margin_h = 60
                     if current_mode == MODE_VIDEOS_GAMES:
@@ -309,14 +301,18 @@ def run_slideshow(enable_animation=True):
                         screen.blit(t1, (sw - t1.get_width() - 20, sh - 55))
                         screen.blit(t2, (20, sh - 45))
                     else:
-                        fname = os.path.basename(file_path)
-                        if hasattr(fname, 'decode'): fname = fname.decode('utf-8', 'ignore')
-                        t = font_small.render(fname, True, (255, 255, 255))
-                        screen.blit(t, (sw - t.get_width() - 20, sh - 45))
+                        # Mode 2 : Vidéos Perso - Utilisation du sidecar généré par le RPi
+                        vm = get_sidecar_data(file_path)
+                        label = vm.get("label", u"Vidéo Perso")
+                        duration = vm.get("info", u"")
+                        t1 = font_small.render(label, True, (255, 255, 255))
+                        screen.blit(t1, (sw - t1.get_width() - 20, sh - 55))
+                        if duration:
+                            t2 = font_tiny.render(u"Durée : %s" % duration, True, (200, 200, 200))
+                            screen.blit(t2, (20, sh - 45))
                     
                     pygame.display.flip()
                     
-                    # Commande omxplayer fenêtre réduite pour voir le HUD en bas
                     cmd = ["omxplayer", "-o", "both", "--no-osd", "--win", "0,0,%d,%d" % (sw, sh - margin_h)]
                     if is_muted: cmd += ["--vol", "-6000"]
                     cmd.append(file_path)
@@ -335,51 +331,36 @@ def run_slideshow(enable_animation=True):
                 screen.blit(img_to_draw, ((sw-z_w)//2, (sh-z_h)//2))
                 
                 if show_info:
-                    # Overlay compact au centre bas
                     ov_w, ov_h = sw * 0.5, sh * 0.25
                     overlay = pygame.Surface((ov_w, ov_h)); overlay.set_alpha(200); overlay.fill((15, 15, 15))
                     ox, oy = (sw-ov_w)//2, sh-ov_h-120
                     screen.blit(overlay, (ox, oy))
-                    
-                    lines = [
-                        meta_data.get("label", u"Sans lieu"),
-                        meta_data.get("full_date", u"Date inconnue"),
-                        u"Retour auto : %ds" % int(max(0, info_timer - now))
-                    ]
+                    lines = [meta_data.get("label", u"Sans lieu"), meta_data.get("info", u"Date inconnue"), u"Retour auto : %ds" % int(max(0, info_timer-now))]
                     for i, line in enumerate(lines):
-                        c = (255, 255, 255) if i < 2 else (200, 200, 100)
+                        c = (255,255,255) if i < 2 else (200,200,100)
                         txt = font_small.render(line, True, c)
-                        screen.blit(txt, (ox + 20, oy + 20 + i * 35))
-                    
+                        screen.blit(txt, (ox+20, oy+20+i*35))
                     if last_detected_code and now < code_timer:
                         d_txt = font_tiny.render(u"Touche : %d" % last_detected_code, True, (255, 255, 0))
-                        screen.blit(d_txt, (ox + ov_w - d_txt.get_width() - 15, oy + ov_h - 25))
+                        screen.blit(d_txt, (ox+ov_w-d_txt.get_width()-15, oy+ov_h-25))
                 else:
                     if meta_data.get("label"):
                         txt = font_main.render(meta_data["label"], True, (255, 255, 255))
                         shd = font_main.render(meta_data["label"], True, (0, 0, 0))
                         tx, ty = sw-txt.get_width()-30, sh-txt.get_height()-30
                         screen.blit(shd, (tx+2, ty+2)); screen.blit(txt, (tx, ty))
-
-                    # HUD Bas-Gauche
                     hy = sh - 35
                     if now < speed_overlay_timer:
                         img_per_min = int(60.0 / display_time)
-                        st = font_small.render(u"%d images / min" % img_per_min, True, (255, 230, 0))
-                        screen.blit(st, (20, hy)); hy -= 35
+                        screen.blit(font_small.render(u"%d images / min" % img_per_min, True, (255, 230, 0)), (20, hy)); hy -= 35
                     if now < mode_overlay_timer:
                         mn = {MODE_PHOTOS: u"PHOTOS", MODE_VIDEOS_PERSO: u"VIDÉOS", MODE_VIDEOS_GAMES: u"JEUX"}
-                        mt = font_small.render(u"MODE : %s" % mn.get(current_mode), True, (0, 255, 255))
-                        screen.blit(mt, (20, hy))
+                        screen.blit(font_small.render(u"MODE : %s" % mn.get(current_mode), True, (0, 255, 255)), (20, hy))
                 pygame.display.flip()
 
             elif current_mode != MODE_PHOTOS:
-                # On redessine uniquement si overlay actif (pour voir le texte en bas de omxplayer)
                 hy = sh - 35
-                overlay_needed = (now < mute_overlay_timer) or (now < mode_overlay_timer)
-                if overlay_needed:
-                    # On ne fill pas (0,0,0) pour ne pas faire clignoter la bande du bas, 
-                    # mais en fbcon omxplayer dessine au dessus. On dessine la bande de texte.
+                if (now < mute_overlay_timer) or (now < mode_overlay_timer):
                     if now < mute_overlay_timer:
                         m_txt = u"SON : COUPE" if is_muted else u"SON : ACTIF"
                         screen.blit(font_small.render(m_txt, True, (255, 100, 100)), (20, hy)); hy -= 35
@@ -387,7 +368,6 @@ def run_slideshow(enable_animation=True):
                         mn = {MODE_VIDEOS_PERSO: u"VIDÉOS", MODE_VIDEOS_GAMES: u"JEUX"}
                         screen.blit(font_small.render(u"MODE : %s" % mn.get(current_mode), True, (0, 255, 255)), (20, hy))
                     pygame.display.flip()
-
             time.sleep(0.04)
     finally:
         if video_proc: stop_video(video_proc)

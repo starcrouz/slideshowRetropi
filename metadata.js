@@ -120,5 +120,8 @@ async function getPhotoMetadata(photoPath, config) {
 }
 
 module.exports = {
-    getPhotoMetadata
+    getPhotoMetadata,
+    capitalize,
+    getBestFolderLabel,
+    extractDateFromPath
 };

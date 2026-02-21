@@ -3,6 +3,7 @@ const path = require('path');
 const { Jimp } = require('jimp');
 const { globSync } = require('glob');
 const convert = require('heic-convert');
+const { execSync } = require('child_process');
 
 const config = require('./config.json');
 
@@ -10,12 +11,26 @@ const config = require('./config.json');
 Jimp.maxMemoryUsageInMB = 1024;
 
 const { getBestLocation } = require('./geo');
-const { getPhotoMetadata } = require('./metadata');
+const { getPhotoMetadata, getBestFolderLabel, capitalize, extractDateFromPath } = require('./metadata');
+
+function getVideoDuration(filePath) {
+    try {
+        //ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "file"
+        const cmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
+        const output = execSync(cmd).toString().trim();
+        const seconds = parseFloat(output);
+        if (isNaN(seconds)) return "";
+
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.round(seconds % 60);
+        return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    } catch (e) {
+        return "";
+    }
+}
 
 async function processImage(photoPath, id, total) {
     const isHeic = photoPath.toLowerCase().endsWith('.heic');
-
-    // 1. Get Metadata (Async with exifr)
     const meta = await getPhotoMetadata(photoPath, config);
     let locationStr = "";
     let gpsStatus = meta.gpsStatus;
@@ -80,12 +95,17 @@ async function processVideos(allVideoFiles) {
     if (!fs.existsSync(config.VIDEO_DEST_DIR)) {
         fs.mkdirSync(config.VIDEO_DEST_DIR, { recursive: true });
     } else {
-        // Nettoyage dossier video
-        const oldVids = fs.readdirSync(config.VIDEO_DEST_DIR);
-        for (const f of oldVids) fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f));
+        const oldFiles = fs.readdirSync(config.VIDEO_DEST_DIR);
+        for (const f of oldFiles) fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f));
     }
 
-    const shuffled = allVideoFiles.sort(() => 0.5 - Math.random());
+    // Filtrer les fichiers trop petits (< 1Mo)
+    const filteredFiles = allVideoFiles.filter(v => {
+        const stats = fs.statSync(v);
+        return stats.size >= 1 * 1024 * 1024;
+    });
+
+    const shuffled = filteredFiles.sort(() => 0.5 - Math.random());
     let currentSizeByte = 0;
     const limitByte = config.VIDEO_LIMIT_MB * 1024 * 1024;
     let count = 0;
@@ -93,12 +113,31 @@ async function processVideos(allVideoFiles) {
     for (const vidPath of shuffled) {
         const stats = fs.statSync(vidPath);
         if (currentSizeByte + stats.size <= limitByte) {
+            const id = (++count).toString().padStart(3, '0');
             const ext = path.extname(vidPath);
-            const destName = `${(++count).toString().padStart(3, '0')}${ext}`;
+            const destName = `${id}${ext}`;
             const destPath = path.join(config.VIDEO_DEST_DIR, destName);
 
-            console.log(`[Video ${count}] ${path.basename(vidPath)} (${(stats.size / 1024 / 1024).toFixed(1)} Mo)`);
+            console.log(`[Video ${id}] ${path.basename(vidPath)} (${(stats.size / 1024 / 1024).toFixed(1)} Mo)`);
             fs.copyFileSync(vidPath, destPath);
+
+            // Création Sidecar pour Vidéo
+            const label = getBestFolderLabel(vidPath, config);
+            const date = extractDateFromPath(vidPath, config);
+            const duration = getVideoDuration(vidPath);
+
+            let finalLabel = label;
+            if (label && date) finalLabel = `${capitalize(label)} - ${date}`;
+            else if (date) finalLabel = date;
+
+            const sidecarContent = [
+                finalLabel || "Vidéo Perso",
+                duration || "Durée inconnue",
+                vidPath
+            ].join('\n');
+
+            fs.writeFileSync(path.join(config.VIDEO_DEST_DIR, `${id}.txt`), sidecarContent, 'utf8');
+
             currentSizeByte += stats.size;
         }
         if (currentSizeByte >= limitByte) break;
@@ -114,7 +153,6 @@ async function start() {
         return;
     }
 
-    // 1. Photos
     const photoPattern = config.SOURCE_DIR.replace(/\\/g, '/') + '/**/*.{jpg,JPG,jpeg,JPEG,heic,HEIC}';
     const allPhotos = globSync(photoPattern);
     console.log(`Photos trouvées : ${allPhotos.length}`);
@@ -127,7 +165,6 @@ async function start() {
         }
     }
 
-    // 2. Vidéos
     const videoPattern = config.SOURCE_DIR.replace(/\\/g, '/') + '/**/*.{mp4,MP4,mkv,MKV,avi,AVI,mov,MOV}';
     const allVideos = globSync(videoPattern);
     console.log(`Vidéos trouvées : ${allVideos.length}`);
