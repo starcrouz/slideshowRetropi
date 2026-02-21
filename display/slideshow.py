@@ -24,7 +24,7 @@ ROMS_FOLDER = "/recalbox/share/roms"
 SETTINGS_FILE = "/recalbox/share/userscripts/slideshow/slideshow_settings.json"
 
 DEFAULT_DISPLAY_TIME = 15 
-MIN_DISPLAY_TIME = 1  # Pour permettre jusqu'à 60 images/min
+MIN_DISPLAY_TIME = 1
 MAX_DISPLAY_TIME = 120
 ZOOM_SPEED = 0.00015
 FADE_SPEED = 8
@@ -76,6 +76,9 @@ def get_sidecar_data(file_path):
 def clean_game_name(name):
     cleaned = re.sub(r'[\(\[].*?[\)\]]', '', name)
     cleaned = cleaned.replace('_', ' ').strip()
+    # Gestion du suffixe ", The"
+    if cleaned.lower().endswith(", the"):
+        cleaned = "The " + cleaned[:-5].strip()
     return cleaned.title()
 
 def parse_game_metadata(file_path):
@@ -235,15 +238,22 @@ def run_slideshow(enable_animation=True):
                                         settings["is_muted"] = is_muted; save_settings(settings)
                                         if video_proc: stop_video(video_proc); video_proc = None; need_load = True
                                 elif ev_code == mode_button_code:
+                                    # Feedback immédiat : on lance la transition
                                     current_mode = (current_mode % 4) + 1
                                     internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
                                     all_files = get_files_for_mode(internal_mode)
                                     indices = list(range(len(all_files)))
                                     random.shuffle(indices)
-                                    current_idx_ptr = 0; need_load = True
+                                    current_idx_ptr = 0
+                                    
+                                    # Reset visuel immédiat pour éviter superposition
+                                    screen.fill((0, 0, 0))
+                                    current_img_raw = None
+                                    alpha = 0
+                                    
                                     mode_overlay_timer = now + OVERLAY_DURATION
                                     settings["current_mode"] = current_mode; save_settings(settings)
-                                    last_cycle_time = now
+                                    last_cycle_time = now; need_load = True
                                     if video_proc: stop_video(video_proc); video_proc = None
                                 else:
                                     running = False; break
@@ -257,14 +267,13 @@ def run_slideshow(enable_animation=True):
                 if event.type in (pygame.QUIT, pygame.KEYDOWN): running = False
                 
                 if not show_info:
-                    # Vitesse (Haut/Bas) - On incrémente de 1 img/min
                     if internal_mode == MODE_PHOTOS and now - last_speed_time > 0.2:
                         change = 0
                         if event.type == pygame.JOYAXISMOTION and event.axis == 1:
-                            if event.value < -0.6: change = 1   # Joystick Haut -> Plus rapide
-                            elif event.value > 0.6: change = -1 # Joystick Bas -> Plus lent
+                            if event.value < -0.6: change = 1
+                            elif event.value > 0.6: change = -1
                         elif event.type == pygame.JOYHATMOTION and event.value[1] != 0:
-                            change = event.value[1] # Hat Up est 1
+                            change = event.value[1]
                         
                         if change != 0:
                             img_per_min = int(round(60.0 / display_time)) + change
@@ -287,13 +296,14 @@ def run_slideshow(enable_animation=True):
             if video_proc and video_proc.poll() is not None:
                 video_proc = None; current_idx_ptr = (current_idx_ptr + 1) % len(indices); need_load = True
 
-            if not need_load and not show_info and internal_mode == MODE_PHOTOS and now - last_switch > display_time:
-                current_idx_ptr = (current_idx_ptr + 1) % len(indices); need_load = True
-
-            if need_load:
+            # Dans le cas du chargement suite à un bouton de mode, on attend que l'overlay disparaisse pour charger
+            if need_load and now < mode_overlay_timer:
+                # On reste sur le nom du mode sans charger l'image/video
+                pass
+            elif need_load:
                 if not indices:
                     screen.fill((0, 0, 0))
-                    msg = u"Mode %d : Aucun fichier" % internal_mode
+                    msg = u"Aucun fichier trouvé"
                     txt = font_main.render(msg, True, (255, 100, 100))
                     screen.blit(txt, ((sw-txt.get_width())//2, (sh-txt.get_height())//2))
                     pygame.display.flip(); time.sleep(2); need_load = False; continue
@@ -315,9 +325,9 @@ def run_slideshow(enable_animation=True):
                     if internal_mode == MODE_VIDEOS_GAMES:
                         vm = parse_game_metadata(file_path)
                         t1 = font_small.render(vm["game"], True, (255, 255, 255))
-                        t2 = font_tiny.render(vm["console"], True, (0, 255, 255))
+                        t2 = font_small.render(vm["console"], True, (0, 255, 255)) # Uniformisé
                         sh1 = font_small.render(vm["game"], True, (0, 0, 0))
-                        sh2 = font_tiny.render(vm["console"], True, (0, 0, 0))
+                        sh2 = font_small.render(vm["console"], True, (0, 0, 0))
                         screen.blit(sh1, (sw - t1.get_width() - 18, sh - 43))
                         screen.blit(t1, (sw - t1.get_width() - 20, sh - 45))
                         screen.blit(sh2, (22, sh - 43))
@@ -335,14 +345,16 @@ def run_slideshow(enable_animation=True):
                             screen.blit(sh2, (22, sh - 43))
                             screen.blit(t2, (20, sh - 45))
                     pygame.display.flip()
-                    # ASPECT MODE respecté avec omxplayer
                     cmd = ["omxplayer", "-o", "both", "--no-osd", "--aspect-mode", "letterbox", "--win", "0,0,%d,%d" % (sw, sh - margin_h)]
                     if is_muted: cmd += ["--vol", "-6000"]
                     cmd.append(file_path)
                     video_proc = subprocess.Popen(cmd, preexec_fn=os.setsid); need_load = False
 
+            if not need_load and not show_info and internal_mode == MODE_PHOTOS and now - last_switch > display_time:
+                current_idx_ptr = (current_idx_ptr + 1) % len(indices); need_load = True
+
             # --- 5. AFFICHAGE ---
-            if internal_mode == MODE_PHOTOS:
+            if internal_mode == MODE_PHOTOS and current_img_raw and not need_load:
                 screen.fill((0, 0, 0))
                 if enable_animation and not show_info: zoom_factor += ZOOM_SPEED
                 z_w, z_h = int(current_img_raw.get_width()*zoom_factor), int(current_img_raw.get_height()*zoom_factor)
@@ -357,19 +369,15 @@ def run_slideshow(enable_animation=True):
                     ox, oy = (sw-ov_w)//2, sh-ov_h-120
                     screen.blit(overlay, (ox, oy))
                     
-                    # 1. Label & Date précise (pas de mois annee redondant)
                     label_raw = meta_data.get("label", u"Sans titre")
-                    # On retire le suffixe " - Mois Année" s'il existe (extraction simplifiée)
                     clean_label = label_raw.split(" - ")[0]
                     precise_date = meta_data.get("info", u"")
                     line1 = u"%s  (%s)" % (clean_label, precise_date)
                     screen.blit(font_small.render(line1, True, (255, 255, 255)), (ox + 15, oy + 10))
                     
-                    # 2. Chemin wrap
                     path_rect = pygame.Rect(ox + 15, oy + 40, ov_w - 30, ov_h - 45)
                     draw_wrapped_text(screen, meta_data.get("source_path", u""), font_tiny, (170, 170, 170), path_rect)
                     
-                    # 3. Compte à rebours
                     cnt = u"%ds" % int(max(0, info_timer - now))
                     ctxt = font_tiny.render(cnt, True, (200, 200, 100))
                     screen.blit(ctxt, (ox + ov_w - ctxt.get_width() - 10, oy + ov_h - 22))
@@ -380,8 +388,8 @@ def run_slideshow(enable_animation=True):
                 else:
                     if meta_data.get("label"):
                         label = meta_data["label"]
-                        txt = font_main.render(label, True, (255, 255, 255))
-                        shd = font_main.render(label, True, (0, 0, 0))
+                        txt = font_small.render(label, True, (255, 255, 255)) # Uniformisé
+                        shd = font_small.render(label, True, (0, 0, 0))
                         tx, ty = sw-txt.get_width()-30, sh-txt.get_height()-30
                         screen.blit(shd, (tx+2, ty+2)); screen.blit(txt, (tx, ty))
 
@@ -392,11 +400,13 @@ def run_slideshow(enable_animation=True):
 
             # OVERLAYS CENTRÉS
             if now < mode_overlay_timer:
-                mns = {MODE_PHOTOS: u"PHOTOS", MODE_VIDEOS_PERSO: u"VIDÉOS", MODE_VIDEOS_GAMES: u"JEUX", MODE_CYCLE: u"CYCLE AUTO"}
-                txt = font_main.render(u"MODE : %s" % mns.get(current_mode), True, (0, 255, 255))
-                screen.blit(txt, ((sw - txt.get_width()) // 2, sh // 2 - 50))
+                screen.fill((0, 0, 0)) # S'assurer que le fond est noir pendant la transition
+                mns = {MODE_PHOTOS: u"Photos", MODE_VIDEOS_PERSO: u"Vidéos", MODE_VIDEOS_GAMES: u"Jeux", MODE_CYCLE: u"Cycle Auto"}
+                txt = font_main.render(u"Mode : %s" % mns.get(current_mode), True, (0, 255, 255))
+                screen.blit(txt, ((sw - txt.get_width()) // 2, (sh - txt.get_height()) // 2))
+                
             if now < mute_overlay_timer:
-                mtx = u"SON : COUPE" if is_muted else u"SON : ACTIF"
+                mtx = u"Son : Coupé" if is_muted else u"Son : Actif"
                 txt = font_main.render(mtx, True, (255, 100, 100))
                 screen.blit(txt, ((sw - txt.get_width()) // 2, sh // 2 + 50))
 
