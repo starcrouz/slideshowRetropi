@@ -1,6 +1,8 @@
 {
     "SOURCE_DIR": "E:/Google Drive/_Perso/Medias/Photos",
     "DEST_DIR": "\\\\RECALBOX\\share\\userscripts\\slideshow\\images",
+    "VIDEO_DEST_DIR": "\\\\RECALBOX\\share\\userscripts\\slideshow\\videos",
+    "VIDEO_LIMIT_MB": 100,
     "NB_IMAGES": 100,
     "SCREEN_W": 1280,
     "SCREEN_H": 1024,

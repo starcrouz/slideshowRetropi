@@ -37,16 +37,13 @@ async function processImage(photoPath, id, total) {
         finalLabel = meta.dateStr;
     }
 
-    console.log(`[${id}/${total}]`);
+    console.log(`[Photo ${id}/${total}]`);
     console.log(`  Source : ${photoPath}`);
-    console.log(`  GPS    : ${gpsStatus}`);
     console.log(`  Label  : ${finalLabel}`);
-    console.log(`  --------------------------------------------------`);
 
     try {
         let imageBuffer;
         if (isHeic) {
-            // Convert HEIC to JPEG buffer
             const inputBuffer = fs.readFileSync(photoPath);
             imageBuffer = await convert({
                 buffer: inputBuffer,
@@ -61,8 +58,6 @@ async function processImage(photoPath, id, total) {
         image.scaleToFit({ w: config.SCREEN_W, h: config.SCREEN_H });
         await image.write(path.join(config.DEST_DIR, `${id}.jpg`));
 
-        // Detailed Sidecar Text
-        // Format: Label\nFull Date\nSource Path
         const sidecarContent = [
             finalLabel,
             meta.fullDateStr || meta.dateStr,
@@ -75,28 +70,66 @@ async function processImage(photoPath, id, total) {
     }
 }
 
+async function processVideos(allVideoFiles) {
+    console.log(`\n--- Tirage Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo) ---`);
+
+    if (!fs.existsSync(config.VIDEO_DEST_DIR)) {
+        fs.mkdirSync(config.VIDEO_DEST_DIR, { recursive: true });
+    } else {
+        // Nettoyage dossier video
+        const oldVids = fs.readdirSync(config.VIDEO_DEST_DIR);
+        for (const f of oldVids) fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f));
+    }
+
+    const shuffled = allVideoFiles.sort(() => 0.5 - Math.random());
+    let currentSizeByte = 0;
+    const limitByte = config.VIDEO_LIMIT_MB * 1024 * 1024;
+    let count = 0;
+
+    for (const vidPath of shuffled) {
+        const stats = fs.statSync(vidPath);
+        if (currentSizeByte + stats.size <= limitByte) {
+            const ext = path.extname(vidPath);
+            const destName = `${(++count).toString().padStart(3, '0')}${ext}`;
+            const destPath = path.join(config.VIDEO_DEST_DIR, destName);
+
+            console.log(`[Video ${count}] ${path.basename(vidPath)} (${(stats.size / 1024 / 1024).toFixed(1)} Mo)`);
+            fs.copyFileSync(vidPath, destPath);
+            currentSizeByte += stats.size;
+        }
+        if (currentSizeByte >= limitByte) break;
+    }
+    console.log(`Total Vidéos : ${count} (${(currentSizeByte / 1024 / 1024).toFixed(1)} Mo)`);
+}
+
 async function start() {
-    console.log("--- Lancement du tirage photo intelligent ---");
+    console.log("--- Lancement du tirage intelligent ---");
 
     if (!fs.existsSync(config.DEST_DIR)) {
-        console.error(`Erreur : Destination inaccessible : ${config.DEST_DIR}`);
+        console.error(`Erreur : Destination Photos inaccessible : ${config.DEST_DIR}`);
         return;
     }
 
-    // Extended pattern to include HEIC
-    const pattern = config.SOURCE_DIR.replace(/\\/g, '/') + '/**/*.{jpg,JPG,jpeg,JPEG,heic,HEIC}';
-    const allFiles = globSync(pattern);
-    console.log(`Photos trouvées : ${allFiles.length}\n`);
+    // 1. Photos
+    const photoPattern = config.SOURCE_DIR.replace(/\\/g, '/') + '/**/*.{jpg,JPG,jpeg,JPEG,heic,HEIC}';
+    const allPhotos = globSync(photoPattern);
+    console.log(`Photos trouvées : ${allPhotos.length}`);
 
-    if (allFiles.length === 0) return;
+    if (allPhotos.length > 0) {
+        const selection = allPhotos.sort(() => 0.5 - Math.random()).slice(0, config.NB_IMAGES);
+        for (let i = 0; i < selection.length; i++) {
+            const id = (i + 1).toString().padStart(3, '0');
+            await processImage(selection[i], id, selection.length);
+        }
+    }
 
-    // Shuffle and pick
-    const selection = allFiles.sort(() => 0.5 - Math.random()).slice(0, config.NB_IMAGES);
+    // 2. Vidéos
+    const videoPattern = config.SOURCE_DIR.replace(/\\/g, '/') + '/**/*.{mp4,MP4,mkv,MKV,avi,AVI,mov,MOV}';
+    const allVideos = globSync(videoPattern);
+    console.log(`Vidéos trouvées : ${allVideos.length}`);
 
-    // Sequential processing
-    for (let i = 0; i < selection.length; i++) {
-        const id = (i + 1).toString().padStart(3, '0');
-        await processImage(selection[i], id, selection.length);
+    if (allVideos.length > 0) {
+        await processVideos(allVideos);
     }
 
     console.log("\n--- Terminé ! ---");
