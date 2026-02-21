@@ -5,6 +5,10 @@ const { globSync } = require('glob');
 const convert = require('heic-convert');
 
 const config = require('./config.json');
+
+// Augmenter la limite mémoire pour les grosses photos HEIC/iPhone 15
+Jimp.maxMemoryUsageInMB = 1024;
+
 const { getBestLocation } = require('./geo');
 const { getPhotoMetadata } = require('./metadata');
 
