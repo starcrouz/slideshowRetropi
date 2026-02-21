@@ -102,20 +102,22 @@ def stop_video(proc):
         except: pass
 
 def draw_wrapped_text(screen, text, font, color, rect):
-    words = text.split('/')
-    if len(words) < 2: words = text.split('\\')
+    # Split by common separators to avoid breaking words mid-way
+    parts = re.split(r'([/\\ _-])', text)
     y = rect.top
     line = ""
-    for word in words:
-        test_line = line + word + "/"
+    for part in parts:
+        test_line = line + part
         if font.size(test_line)[0] < rect.width:
             line = test_line
         else:
-            txt_surface = font.render(line, True, color)
-            screen.blit(txt_surface, (rect.left, y))
-            y += font.get_linesize()
-            line = word + "/"
-    if line:
+            if line:
+                txt_surface = font.render(line, True, color)
+                screen.blit(txt_surface, (rect.left, y))
+                y += font.get_linesize()
+            line = part
+            if y > rect.bottom - font.get_linesize(): break
+    if line and y <= rect.bottom - font.get_linesize():
         txt_surface = font.render(line, True, color)
         screen.blit(txt_surface, (rect.left, y))
 
@@ -161,7 +163,7 @@ def run_slideshow(enable_animation=True):
     
     font_main = pygame.font.Font(None, int(sh * 0.05))
     font_small = pygame.font.Font(None, int(sh * 0.03))
-    font_tiny = pygame.font.Font(None, int(sh * 0.025))
+    font_tiny = pygame.font.Font(None, int(sh * 0.022))
 
     def get_files_for_mode(mode):
         if mode == MODE_PHOTOS:
@@ -205,7 +207,6 @@ def run_slideshow(enable_animation=True):
                 indices = range(len(all_files))
                 random.shuffle(indices)
                 current_idx_ptr = 0; need_load = True; last_cycle_time = now
-                # Silent cycle: on ne déclenche PAS mode_overlay_timer
                 if video_proc: stop_video(video_proc); video_proc = None
 
             # --- 2. ENTRÉES ---
@@ -238,7 +239,6 @@ def run_slideshow(enable_animation=True):
                                     indices = range(len(all_files))
                                     random.shuffle(indices)
                                     current_idx_ptr = 0; need_load = True
-                                    # Manuel toggle: on affiche l'overlay
                                     mode_overlay_timer = now + OVERLAY_DURATION
                                     settings["current_mode"] = current_mode; save_settings(settings)
                                     last_cycle_time = now
@@ -305,20 +305,27 @@ def run_slideshow(enable_animation=True):
                 else:
                     screen.fill((0, 0, 0))
                     margin_h = 60
-                    # Préparer le HUD pour rincer la zone avant lancement omxplayer
                     if internal_mode == MODE_VIDEOS_GAMES:
                         vm = parse_game_metadata(file_path)
                         t1 = font_small.render(vm["game"], True, (255, 255, 255))
                         t2 = font_tiny.render(vm["console"], True, (0, 255, 255))
+                        sh1 = font_small.render(vm["game"], True, (0, 0, 0))
+                        sh2 = font_tiny.render(vm["console"], True, (0, 0, 0))
+                        screen.blit(sh1, (sw - t1.get_width() - 18, sh - 43))
                         screen.blit(t1, (sw - t1.get_width() - 20, sh - 45))
+                        screen.blit(sh2, (22, sh - 43))
                         screen.blit(t2, (20, sh - 45))
                     else:
                         vm = get_sidecar_data(file_path)
                         label = vm.get("label", u"Vidéo Perso")
                         t1 = font_small.render(label, True, (255, 255, 255))
+                        sh1 = font_small.render(label, True, (0, 0, 0))
+                        screen.blit(sh1, (sw - t1.get_width() - 18, sh - 43))
                         screen.blit(t1, (sw - t1.get_width() - 20, sh - 45))
                         if vm.get("info"):
                             t2 = font_tiny.render(u"Durée : %s" % vm["info"], True, (200, 200, 200))
+                            sh2 = font_tiny.render(u"Durée : %s" % vm["info"], True, (0, 0, 0))
+                            screen.blit(sh2, (22, sh - 43))
                             screen.blit(t2, (20, sh - 45))
                     pygame.display.flip()
                     cmd = ["omxplayer", "-o", "both", "--no-osd", "--win", "0,0,%d,%d" % (sw, sh - margin_h)]
@@ -337,30 +344,32 @@ def run_slideshow(enable_animation=True):
                 screen.blit(img_to_draw, ((sw-z_w)//2, (sh-z_h)//2))
                 
                 if show_info:
-                    ov_w, ov_h = sw * 0.7, sh * 0.2
+                    # Boite Info ultra compacte (hauteur réduite)
+                    ov_w, ov_h = sw * 0.7, sh * 0.12
                     overlay = pygame.Surface((ov_w, ov_h)); overlay.set_alpha(200); overlay.fill((15, 15, 15))
                     ox, oy = (sw-ov_w)//2, sh-ov_h-120
                     screen.blit(overlay, (ox, oy))
                     
-                    label_txt = meta_data.get("label", u"Sans titre")
-                    screen.blit(font_small.render(label_txt, True, (255, 255, 255)), (ox + 20, oy + 20))
+                    # 1. Label & Date précise (sur la même ligne)
+                    l1_txt = u"%s  (%s)" % (meta_data.get("label", u"Sans titre"), meta_data.get("info", u"Date inconnue"))
+                    screen.blit(font_small.render(l1_txt, True, (255, 255, 255)), (ox + 15, oy + 10))
                     
-                    # Chemin avec wrap
-                    path_rect = pygame.Rect(ox + 20, oy + 55, ov_w - 40, ov_h - 75)
-                    draw_wrapped_text(screen, meta_data.get("source_path", u""), font_tiny, (180, 180, 180), path_rect)
+                    # 2. Chemin wrap juste en dessous
+                    path_rect = pygame.Rect(ox + 15, oy + 40, ov_w - 30, ov_h - 45)
+                    draw_wrapped_text(screen, meta_data.get("source_path", u""), font_tiny, (170, 170, 170), path_rect)
                     
+                    # 3. Compte à rebours discret en bas à droite
                     cnt = u"%ds" % int(max(0, info_timer - now))
                     ctxt = font_tiny.render(cnt, True, (200, 200, 100))
-                    screen.blit(ctxt, (ox + ov_w - ctxt.get_width() - 15, oy + ov_h - 25))
+                    screen.blit(ctxt, (ox + ov_w - ctxt.get_width() - 10, oy + ov_h - 22))
                     
                     if last_detected_code and now < code_timer:
-                        d_txt = font_tiny.render(u"Touche: %d" % last_detected_code, True, (255, 255, 0))
-                        screen.blit(d_txt, (ox + ov_w - d_txt.get_width() - 60, oy + ov_h - 25))
+                        d_txt = font_tiny.render(u"Code: %d" % last_detected_code, True, (255, 215, 0))
+                        screen.blit(d_txt, (ox + ov_w - d_txt.get_width() - 40, oy + ov_h - 22))
                 else:
                     if meta_data.get("label"):
-                        label = meta_data["label"]
-                        txt = font_main.render(label, True, (255, 255, 255))
-                        shd = font_main.render(label, True, (0, 0, 0))
+                        txt = font_main.render(meta_data["label"], True, (255, 255, 255))
+                        shd = font_main.render(meta_data["label"], True, (0, 0, 0))
                         tx, ty = sw-txt.get_width()-30, sh-txt.get_height()-30
                         screen.blit(shd, (tx+2, ty+2)); screen.blit(txt, (tx, ty))
 

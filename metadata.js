@@ -44,14 +44,20 @@ function extractDateFromPath(filePath, config) {
 }
 
 function getBestFolderLabel(filePath, config) {
-    let parentPath = path.dirname(filePath);
-    let folderName = path.basename(parentPath);
+    let currentPath = path.dirname(filePath);
+    let label = "";
 
-    if (config.GENERIC_FOLDERS.some(word => folderName.toLowerCase().includes(word))) {
-        folderName = path.basename(path.dirname(parentPath));
+    // On remonte jusqu'à 3 niveaux pour trouver un nom non-générique
+    for (let i = 0; i < 3; i++) {
+        let folderName = path.basename(currentPath);
+        if (!config.GENERIC_FOLDERS.some(word => folderName.toLowerCase().includes(word))) {
+            label = cleanFolderName(folderName);
+            if (label) break;
+        }
+        currentPath = path.dirname(currentPath);
     }
 
-    return cleanFolderName(folderName);
+    return label;
 }
 
 async function getPhotoMetadata(photoPath, config) {
