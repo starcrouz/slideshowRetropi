@@ -4,6 +4,7 @@
     "VIDEO_DEST_DIR": "\\\\RECALBOX\\share\\userscripts\\slideshow\\videos",
     "VIDEO_LIMIT_MB": 100,
     "VIDEO_MIN_DURATION_SEC": 4,
+    "VIDEO_MAX_PLAY_SEC": 30,
     "NB_IMAGES": 100,
     "SCREEN_W": 1280,
     "SCREEN_H": 1024,

@@ -871,7 +871,7 @@
                         <span class="description">Chemin réseau d'écriture pour les vidéos persos.</span>
                     </div>
                     
-                    <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="NB_IMAGES">Nombre max photos</label>
                             <input type="number" class="form-input" id="NB_IMAGES" min="1" max="1000" required>
@@ -880,10 +880,18 @@
                             <label for="VIDEO_LIMIT_MB">Stockage vidéos (Mo)</label>
                             <input type="number" class="form-input" id="VIDEO_LIMIT_MB" min="1" required>
                         </div>
+                    </div>
+
+                    <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
                             <label for="VIDEO_MIN_DURATION_SEC">Durée vidéo min (s)</label>
                             <input type="number" class="form-input" id="VIDEO_MIN_DURATION_SEC" min="1" max="60" required>
                             <span class="description">Ignore les Live Photos (&lt; 4s).</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="VIDEO_MAX_PLAY_SEC">Durée vidéo max / coupe (s)</label>
+                            <input type="number" class="form-input" id="VIDEO_MAX_PLAY_SEC" min="5" max="180" required>
+                            <span class="description">Coupe les vidéos longues à cette durée (ex: 30s).</span>
                         </div>
                     </div>
                 </div>

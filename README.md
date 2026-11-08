@@ -35,6 +35,7 @@ Maintains a selection of optimized photos from your library and transfers them t
 | `SCREEN_W` / `SCREEN_H` | Target screen resolution (used for aspect ratio filtering) |
 | `VIDEO_LIMIT_MB` | Maximum total size of converted videos to transfer (in MB) |
 | `VIDEO_MIN_DURATION_SEC` | Minimum video duration in seconds (default: `4`, excludes iPhone Live Photos) |
+| `VIDEO_MAX_PLAY_SEC` | Maximum playback duration per video in seconds (default: `30`, trims longer clips up to 3m and excludes movies > 3m) |
 | `CITY_OVERRIDES` | Rename specific detected cities (e.g. suburbs → city center) |
 | `COUNTRY_NAMES` | Translate ISO country codes to display names |
 | `GENERIC_FOLDERS` | Folder names to ignore when building location labels |

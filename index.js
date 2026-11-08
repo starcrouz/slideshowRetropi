@@ -400,35 +400,42 @@ function probeVideo(filePath) {
     }
 }
 
-function convertVideoForBartop(inputPath, outputPath) {
+function convertVideoForBartop(inputPath, outputPath, maxPlaySec = 30) {
     const maxW = config.SCREEN_W || 1280;
     const maxH = config.SCREEN_H || 1024;
     // Redimensionne sans dépasser l'écran, force des dimensions paires, 30 fps constants et format 8-bit yuv420p (requis par omxplayer RPi)
     const vf = `scale='min(${maxW},iw)':'min(${maxH},ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=30,format=yuv420p`;
 
+    const args = [
+        '-y',
+        '-v', 'error'
+    ];
+    if (typeof maxPlaySec === 'number' && maxPlaySec > 0) {
+        args.push('-t', String(maxPlaySec));
+    }
+    args.push(
+        '-i', inputPath,
+        '-map', '0:v:0',
+        '-map', '0:a:0?',
+        '-dn',
+        '-sn',
+        '-vf', vf,
+        '-c:v', 'libx264',
+        '-profile:v', 'high',
+        '-level:v', '4.1',
+        '-preset', 'veryfast',
+        '-crf', '23',
+        '-c:a', 'aac',
+        '-b:a', '128k',
+        '-ac', '2',
+        '-ar', '44100',
+        '-movflags', '+faststart',
+        outputPath
+    );
+
     execFileSync(
         'ffmpeg',
-        [
-            '-y',
-            '-v', 'error',
-            '-i', inputPath,
-            '-map', '0:v:0',
-            '-map', '0:a:0?',
-            '-dn',
-            '-sn',
-            '-vf', vf,
-            '-c:v', 'libx264',
-            '-profile:v', 'high',
-            '-level:v', '4.1',
-            '-preset', 'veryfast',
-            '-crf', '23',
-            '-c:a', 'aac',
-            '-b:a', '128k',
-            '-ac', '2',
-            '-ar', '44100',
-            '-movflags', '+faststart',
-            outputPath
-        ],
+        args,
         { stdio: ['ignore', 'ignore', 'pipe'], timeout: 180000 }
     );
 
@@ -478,8 +485,9 @@ async function processImage(photoPath, image, id, total, checkResult, meta) {
 
 async function processVideos(allVideoFiles, onProgress) {
     const minDurationSec = typeof config.VIDEO_MIN_DURATION_SEC === 'number' ? config.VIDEO_MIN_DURATION_SEC : 4;
-    const maxDurationSec = 180; // Max 3 minutes par vidéo pour éviter les longs films
-    console.log(`\n--- Tirage & Conversion Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo, durée min ${minDurationSec}s) ---`);
+    const maxPlaySec = typeof config.VIDEO_MAX_PLAY_SEC === 'number' ? config.VIDEO_MAX_PLAY_SEC : 30;
+    const maxDurationSec = 180; // Max 3 minutes par vidéo source pour éviter les longs films
+    console.log(`\n--- Tirage & Conversion Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo, durée min ${minDurationSec}s, coupées à ${maxPlaySec}s max) ---`);
 
     if (!fs.existsSync(config.VIDEO_DEST_DIR)) {
         fs.mkdirSync(config.VIDEO_DEST_DIR, { recursive: true });
@@ -535,10 +543,13 @@ async function processVideos(allVideoFiles, onProgress) {
             }
 
             const srcStats = fs.statSync(vidPath);
-            console.log(`  [Conversion] ${path.basename(vidPath)} (${probe.codec.toUpperCase()} ${probe.width}x${probe.height}, ${probe.durationStr}, ${(srcStats.size / 1024 / 1024).toFixed(1)} Mo) -> MP4 H.264...`);
+            const isTrimmed = probe.durationSec > maxPlaySec;
+            const finalDurationStr = isTrimmed ? `${maxPlaySec}s` : probe.durationStr;
+            const trimNote = isTrimmed ? ` -> coupée à ${maxPlaySec}s` : '';
+            console.log(`  [Conversion] ${path.basename(vidPath)} (${probe.codec.toUpperCase()} ${probe.width}x${probe.height}, ${probe.durationStr}${trimNote}, ${(srcStats.size / 1024 / 1024).toFixed(1)} Mo) -> MP4 H.264...`);
 
             try {
-                convertVideoForBartop(vidPath, tempMp4Path);
+                convertVideoForBartop(vidPath, tempMp4Path, maxPlaySec);
             } catch (convErr) {
                 console.log(`  [Vidéo écartée] Échec conversion FFmpeg pour ${path.basename(vidPath)} : ${convErr.message}`);
                 continue;
@@ -601,7 +612,7 @@ async function processVideos(allVideoFiles, onProgress) {
             // Extraction Metadata Vidéo
             const label = getBestFolderLabel(vidPath, config);
             const date = extractDateFromPath(vidPath, config);
-            const duration = probe.durationStr;
+            const duration = finalDurationStr;
 
             let finalLabel = "";
             if (label && date) finalLabel = `${capitalize(label)} - ${date}`;
