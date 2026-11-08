@@ -758,9 +758,9 @@
                 <div class="glass-card" id="bartop-live-card" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <div class="terminal-header" style="border-bottom: 1px solid var(--panel-border); padding-bottom: 0.5rem; margin-bottom: 0;">
                         <span>EN DIRECT DU BARTOP</span>
-                        <div style="display: flex; align-items: center; gap: 0.35rem;">
-                            <span style="width: 8px; height: 8px; border-radius: 9999px; background: var(--accent-green); animation: pulse 1.5s infinite;"></span>
-                            <span style="font-size: 0.7rem; color: var(--accent-green); font-weight: bold; letter-spacing: 0.05em;">LIVE</span>
+                        <div id="bartop-live-status" style="display: flex; align-items: center; gap: 0.35rem;">
+                            <span id="bartop-status-dot" style="width: 8px; height: 8px; border-radius: 9999px; background: var(--accent-green); animation: pulse 1.5s infinite;"></span>
+                            <span id="bartop-status-label" style="font-size: 0.7rem; color: var(--accent-green); font-weight: bold; letter-spacing: 0.05em;">LIVE</span>
                         </div>
                     </div>
                     <div id="bartop-live-content" style="display: flex; flex-direction: column; gap: 0.75rem; justify-content: center; flex: 1; min-height: 220px;">
@@ -794,8 +794,8 @@
             <!-- Bandeau En Direct intégré à la galerie -->
             <div class="glass-card" id="gallery-live-banner" style="display: flex; align-items: center; gap: 1.25rem; padding: 1rem 1.5rem; margin-bottom: 0.5rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: pulse 1.5s infinite;"></span>
-                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--accent-green); letter-spacing: 0.06em;">EN DIRECT</span>
+                    <span id="gallery-status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: pulse 1.5s infinite;"></span>
+                    <span id="gallery-status-label" style="font-size: 0.75rem; font-weight: 700; color: var(--accent-green); letter-spacing: 0.06em;">EN DIRECT</span>
                 </div>
                 <div id="gallery-live-thumb" style="width: 60px; height: 45px; background: #090a0f; border-radius: 0.4rem; overflow: hidden; flex-shrink: 0; border: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: center;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5d6174" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -1155,8 +1155,10 @@
             }
         }
 
+        let lastHistoryTimestamp = 0;
+
         // Charger last_run.json (Historique)
-        async function loadHistory() {
+        async function loadHistory(force = false) {
             try {
                 const response = await fetch('/api/history');
                 if (!response.ok) {
@@ -1167,6 +1169,10 @@
                     throw new Error('Erreur historique');
                 }
                 const data = await response.json();
+                if (!force && data.timestamp && data.timestamp === lastHistoryTimestamp && selectedPhotosData.length === (data.selected || []).length) {
+                    return;
+                }
+                lastHistoryTimestamp = data.timestamp || 0;
                 
                 // Remplir les statistiques
                 document.getElementById('stat-total').innerText = data.stats.totalPhotos;
@@ -1647,19 +1653,87 @@
                     return;
                 }
 
-                // Mettre à jour le panneau seulement si le fichier a changé
-                const filenameChanged = data.filename !== lastLiveFilename;
+                // Détecter la fraîcheur des données via le timestamp
+                const ageSeconds = data.timestamp ? Math.floor(Date.now() / 1000 - data.timestamp) : 9999;
+                const isStale = ageSeconds > 180; // > 3 min = probablement inactif
+
+                // Mettre à jour l'indicateur de statut
+                const statusDot = document.getElementById('bartop-status-dot');
+                const statusLabel = document.getElementById('bartop-status-label');
+                const galleryDot = document.getElementById('gallery-status-dot');
+                const galleryLabel = document.getElementById('gallery-status-label');
+
+                function formatAge(sec) {
+                    if (sec < 60) return `il y a ${sec}s`;
+                    if (sec < 3600) return `il y a ${Math.floor(sec/60)}min`;
+                    return `il y a ${Math.floor(sec/3600)}h`;
+                }
+
+                if (isStale) {
+                    // Données périmées : le slideshow est probablement arrêté
+                    if (statusDot) { statusDot.style.background = '#f59e0b'; statusDot.style.animation = 'none'; }
+                    if (statusLabel) { statusLabel.style.color = '#f59e0b'; statusLabel.textContent = 'INACTIF'; }
+                    if (galleryDot) { galleryDot.style.background = '#f59e0b'; galleryDot.style.animation = 'none'; }
+                    if (galleryLabel) { galleryLabel.style.color = '#f59e0b'; galleryLabel.textContent = 'INACTIF'; }
+                } else {
+                    // Données fraîches : slideshow actif
+                    if (statusDot) { statusDot.style.background = 'var(--accent-green)'; statusDot.style.animation = 'pulse 1.5s infinite'; }
+                    if (statusLabel) { statusLabel.style.color = 'var(--accent-green)'; statusLabel.textContent = 'LIVE'; }
+                    if (galleryDot) { galleryDot.style.background = 'var(--accent-green)'; galleryDot.style.animation = 'pulse 1.5s infinite'; }
+                    if (galleryLabel) { galleryLabel.style.color = 'var(--accent-green)'; galleryLabel.textContent = 'EN DIRECT'; }
+                }
+
+                // Mettre à jour le panneau seulement si le fichier ou le style a changé
+                const liveSignature = `${data.filename || ''}|${data.style || ''}|${data.layout || ''}`;
+                const filenameChanged = liveSignature !== lastLiveFilename;
                 if (filenameChanged) {
-                    lastLiveFilename = data.filename;
+                    lastLiveFilename = liveSignature;
 
                     // --- PANNEAU DASHBOARD ---
                     const content = document.getElementById('bartop-live-content');
                     let mediaHTML = "";
+                    const styleNamesMap = {
+                        modern: data.layout === 'duo' ? '✨ AMBILIGHT • DUO' : '✨ AMBILIGHT',
+                        bento: '🧩 MOSAÏQUE BENTO (3)',
+                        polaroid: data.layout === 'duo' ? '📸 POLAROID • DUO' : '📸 POLAROID',
+                        magazine: data.layout === 'duo' ? '📰 MAGAZINE • SPLIT' : '📰 MAGAZINE COVER',
+                        arcade: data.layout === 'duo' ? '🕹️ NÉON BARTOP • DUO' : '🕹️ NÉON BARTOP',
+                        classic: '📺 CLASSIQUE'
+                    };
+                    const badgeLabel = styleNamesMap[data.style] || '✨ MODERNE';
+                    const styleBadgeHTML = data.type === "photo" && data.style ? `
+                        <span style="position: absolute; top: 0.45rem; left: 0.45rem; background: ${data.style === 'classic' ? 'rgba(55, 65, 81, 0.88)' : 'rgba(99, 102, 241, 0.88)'}; color: #fff; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 9999px; letter-spacing: 0.04em; backdrop-filter: blur(4px); z-index: 2;">
+                            ${badgeLabel}
+                        </span>
+                    ` : '';
 
-                    if (data.type === "photo" && data.source_path) {
+                    if (data.type === "photo" && data.layout === "bento" && data.source_path && data.secondary && data.tertiary) {
+                        const imgUrl1 = `/api/photo?path=${encodeURIComponent(data.source_path)}`;
+                        const imgUrl2 = `/api/photo?path=${encodeURIComponent(data.secondary.source_path)}`;
+                        const imgUrl3 = `/api/photo?path=${encodeURIComponent(data.tertiary.source_path)}`;
+                        mediaHTML = `
+                            <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 0.3rem; padding: 0.35rem; position: relative; border: 1px solid var(--panel-border);">
+                                ${styleBadgeHTML}
+                                <img src="${imgUrl1}" style="max-width: 32%; max-height: 100%; object-fit: contain; border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.2);" loading="lazy">
+                                <img src="${imgUrl2}" style="max-width: 32%; max-height: 100%; object-fit: contain; border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.2);" loading="lazy">
+                                <img src="${imgUrl3}" style="max-width: 32%; max-height: 100%; object-fit: contain; border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.2);" loading="lazy">
+                            </div>
+                        `;
+                    } else if (data.type === "photo" && data.layout === "duo" && data.source_path && data.secondary && data.secondary.source_path) {
+                        const imgUrl1 = `/api/photo?path=${encodeURIComponent(data.source_path)}`;
+                        const imgUrl2 = `/api/photo?path=${encodeURIComponent(data.secondary.source_path)}`;
+                        mediaHTML = `
+                            <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 0.4rem; padding: 0.35rem; position: relative; border: 1px solid var(--panel-border);">
+                                ${styleBadgeHTML}
+                                <img src="${imgUrl1}" style="max-width: 48%; max-height: 100%; object-fit: contain; border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.2);" loading="lazy">
+                                <img src="${imgUrl2}" style="max-width: 48%; max-height: 100%; object-fit: contain; border-radius: 0.25rem; border: 1px solid rgba(255,255,255,0.2);" loading="lazy">
+                            </div>
+                        `;
+                    } else if (data.type === "photo" && data.source_path) {
                         const imgUrl = `/api/photo?path=${encodeURIComponent(data.source_path)}`;
                         mediaHTML = `
-                            <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid var(--panel-border);">
+                            <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; position: relative; border: 1px solid var(--panel-border);">
+                                ${styleBadgeHTML}
                                 <img src="${imgUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" loading="lazy">
                             </div>
                         `;
@@ -1668,7 +1742,8 @@
                         if (match) {
                             const imgUrl = `/api/photo?path=${encodeURIComponent(match.path)}`;
                             mediaHTML = `
-                                <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; border: 1px solid var(--panel-border);">
+                                <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; position: relative; border: 1px solid var(--panel-border);">
+                                    ${styleBadgeHTML}
                                     <img src="${imgUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;" loading="lazy">
                                 </div>
                             `;
@@ -1678,10 +1753,16 @@
                         mediaHTML = `
                             <div style="width: 100%; height: 155px; background: #090a0f; border-radius: 0.5rem; overflow: hidden; display: flex; justify-content: center; align-items: center; position: relative; border: 1px solid var(--panel-border);">
                                 <video src="${videoUrl}" autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
-                                <span class="badge sharpness-high" style="top: 0.5rem; right: 0.5rem;">▶️ VIDEO</span>
+                                <span class="badge sharpness-high" style="top: 0.5rem; right: 0.5rem;">&#9654;&#65039; VIDEO</span>
                             </div>
                         `;
                     }
+
+                    // Avertissement si données périmées
+                    const staleWarning = isStale ? `
+                        <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 0.4rem; padding: 0.45rem 0.75rem; font-size: 0.75rem; color: #fbbf24; text-align: center;">
+                            ⚠️ Dernière mise à jour ${formatAge(ageSeconds)} — le diaporama est peut-être arrêté
+                        </div>` : '';
 
                     // Label en titre principal, filename en secondaire
                     content.innerHTML = `
@@ -1692,15 +1773,31 @@
                                 ${data.info ? `<div style="font-size: 0.78rem; color: #a5b4fc; text-align: center; font-weight: 500;">${data.info}</div>` : ''}
                                 <div style="font-size: 0.68rem; color: #5d6174; text-align: center; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.15rem;" title="${data.filename}">${data.filename}</div>
                             </div>
+                            ${staleWarning}
                         </div>
                     `;
 
                     // --- BANDEAU GALERIE ---
                     updateGalleryLiveBanner(data);
+                } else if (isStale) {
+                    // Même photo mais statut a changé (vient de passer inactif) : afficher l'avertissement
+                    const content = document.getElementById('bartop-live-content');
+                    const existing = content.querySelector('[data-stale-warn]');
+                    if (!existing) {
+                        const warn = document.createElement('div');
+                        warn.setAttribute('data-stale-warn', '1');
+                        warn.style.cssText = 'background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:0.4rem;padding:0.45rem 0.75rem;font-size:0.75rem;color:#fbbf24;text-align:center;margin-top:0.35rem;';
+                        warn.textContent = `⚠️ Dernière mise à jour ${formatAge(ageSeconds)} — le diaporama est peut-être arrêté`;
+                        content.querySelector('div')?.appendChild(warn);
+                    }
                 }
 
                 // --- HIGHLIGHT CARTE (toujours ré-appliqué, en cas de re-rendu de la galerie) ---
-                highlightLiveCard(data.source_path);
+                highlightLiveCard(
+                    data.source_path,
+                    data.secondary ? data.secondary.source_path : null,
+                    data.tertiary ? data.tertiary.source_path : null
+                );
 
             } catch (e) {
                 console.error("Erreur lors de la mise à jour du live Bartop:", e);
@@ -1714,7 +1811,16 @@
             const thumb = document.getElementById('gallery-live-thumb');
 
             label.textContent = data.label || data.filename;
-            info.textContent = data.info || data.filename;
+            const styleBannerMap = {
+                modern: data.layout === 'duo' ? '✨ Ambilight (Duo) • ' : '✨ Ambilight • ',
+                bento: '🧩 Mosaïque Bento (3 photos) • ',
+                polaroid: '📸 Polaroid Vintage • ',
+                magazine: '📰 Magazine Plein Écran • ',
+                arcade: '🕹️ Néon Bartop • ',
+                classic: '📺 Style Classique • '
+            };
+            const stylePrefix = (data.type === 'photo' && data.style) ? (styleBannerMap[data.style] || '✨ Moderne • ') : '';
+            info.textContent = stylePrefix + (data.info || data.filename);
 
             // Miniature
             let thumbSrc = null;
@@ -1732,7 +1838,7 @@
             }
         }
 
-        function highlightLiveCard(sourcePath) {
+        function highlightLiveCard(sourcePath, secondaryPath, tertiaryPath) {
             // Retirer l'ancien highlight
             document.querySelectorAll('.photo-card.live-now').forEach(c => {
                 c.classList.remove('live-now');
@@ -1740,15 +1846,16 @@
                 if (badge) badge.remove();
             });
 
-            if (!sourcePath) return;
+            if (!sourcePath && !secondaryPath && !tertiaryPath) return;
 
             // Trouver la carte par son chemin SOURCE (data-path = chemin source original)
             const grid = document.getElementById('grid-selected');
             if (!grid) return;
 
+            let scrolled = false;
             Array.from(grid.children).forEach(card => {
                 const cardPath = card.getAttribute('data-path') || '';
-                if (cardPath === sourcePath) {
+                if (cardPath === sourcePath || (secondaryPath && cardPath === secondaryPath) || (tertiaryPath && cardPath === tertiaryPath)) {
                     card.classList.add('live-now');
                     // Ajouter badge
                     const wrapper = card.querySelector('.photo-thumb-wrapper');
@@ -1759,8 +1866,9 @@
                         wrapper.appendChild(badge);
                     }
                     // Scroll vers la carte si on est dans la galerie
-                    if (document.getElementById('tab-selected-gallery').classList.contains('active')) {
+                    if (!scrolled && document.getElementById('tab-selected-gallery').classList.contains('active')) {
                         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        scrolled = true;
                     }
                 }
             });
@@ -1783,8 +1891,9 @@
 
         function startBartopLivePolling() {
             updateBartopLive();
-            // Polling toutes les 3s (le slideshow change au minimum toutes les 1s)
+            // Polling toutes les 3s pour le live Bartop et 6s pour rafraîchir la galerie (si tâche planifiée en arrière-plan)
             setInterval(updateBartopLive, 3000);
+            setInterval(() => loadHistory(false), 6000);
         }
     </script>
 </body>

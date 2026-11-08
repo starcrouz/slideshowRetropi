@@ -380,7 +380,10 @@ async function processImage(photoPath, image, id, total, checkResult, meta) {
     console.log(`  Label  : ${finalLabel}`);
 
     try {
-        image.scaleToFit({ w: config.SCREEN_W, h: config.SCREEN_H });
+        const isPortrait = image.bitmap.height > image.bitmap.width;
+        const maxW = config.SCREEN_W;
+        const maxH = isPortrait ? Math.max(config.SCREEN_W, config.SCREEN_H) : config.SCREEN_H;
+        image.scaleToFit({ w: maxW, h: maxH });
         await image.write(path.join(config.DEST_DIR, `${id}.jpg`));
 
         // Écrire également dans le cache local du PC pour un affichage Web instantané
@@ -531,28 +534,42 @@ async function start() {
         const allVideos = globSync(videoPattern);
         console.log(`Vidéos trouvées : ${allVideos.length}`);
 
+        let previousSelected = [];
+        let previousVideos = [];
+        const reportFilePath = path.join(__dirname, 'last_run.json');
+        if (fs.existsSync(reportFilePath)) {
+            try {
+                const prevData = JSON.parse(fs.readFileSync(reportFilePath, 'utf8'));
+                if (Array.isArray(prevData.selected)) previousSelected = prevData.selected;
+                if (Array.isArray(prevData.videos)) previousVideos = prevData.videos;
+            } catch (e) {
+                // Ignorer si illisible
+            }
+        }
+
         const runReport = {
             timestamp: Date.now(),
             stats: {
                 totalPhotos: allPhotos.length,
                 totalVideos: allVideos.length,
-                selected: 0,
+                selected: previousSelected.length,
                 rejected: 0
             },
-            selected: [],
+            selected: [...previousSelected],
             rejected: [],
-            videos: []
+            videos: [...previousVideos]
         };
 
         const writeReport = () => {
             try {
-                fs.writeFileSync(path.join(__dirname, 'last_run.json'), JSON.stringify(runReport, null, 2), 'utf8');
+                runReport.timestamp = Date.now();
+                fs.writeFileSync(reportFilePath, JSON.stringify(runReport, null, 2), 'utf8');
             } catch (err) {
                 // Sourd aux erreurs d'écriture temporaire
             }
         };
 
-        // Écriture initiale vide pour réinitialiser l'affichage
+        // Écriture initiale conservant les photos déjà présentes sur le Bartop
         writeReport();
         
         if (allPhotos.length > 0) {
@@ -695,7 +712,7 @@ async function start() {
                     const id = count.toString().padStart(3, '0');
                     const label = await processImage(photoPath, image, id, config.NB_IMAGES, check, meta);
                     
-                    runReport.selected.push({
+                    const newPhotoEntry = {
                         path: photoPath,
                         label: label || "Sans label",
                         sharpness: Math.round(check.sharpness),
@@ -704,8 +721,13 @@ async function start() {
                         rotationDeg: meta ? (meta.rotationDeg || 0) : 0,
                         ocrWords: ocrWords,
                         ocrChars: ocrChars
-                    });
-                    runReport.stats.selected++;
+                    };
+                    if (count - 1 < runReport.selected.length) {
+                        runReport.selected[count - 1] = newPhotoEntry;
+                    } else {
+                        runReport.selected.push(newPhotoEntry);
+                    }
+                    runReport.stats.selected = runReport.selected.length;
                     writeReport();
                 } catch (err) {
                     console.log(`  [Rejeté] Erreur chargement ${path.basename(photoPath)} : ${err.message}`);
@@ -723,6 +745,12 @@ async function start() {
                 }
             }
             
+            if (count > 0 && runReport.selected.length > count) {
+                runReport.selected.length = count;
+                runReport.stats.selected = count;
+                writeReport();
+            }
+
             // Nettoyage des anciennes images en trop à la fin de la sélection (ex: 101.jpg à 120.jpg si le nombre a baissé)
             try {
                 const oldFiles = fs.readdirSync(config.DEST_DIR);

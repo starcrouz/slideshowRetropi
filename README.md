@@ -102,26 +102,29 @@ A two-script system to turn your Recalbox into a photo frame when idle.
   - `Vidéos` — Plays personal videos from the videos folder.
   - `Jeux` — Plays game video snaps from the Recalbox roms folder.
   - `Cycle Auto` — Rotates through all three modes automatically every 60 seconds.
-- **Rich Photo Animations** (6 types, chosen randomly per photo):
-  - Zoom In / Zoom Out
-  - Pan Left / Pan Right / Pan Up / Pan Down
-  - Smooth vertical scroll for portrait-orientation photos (no black bars).
-- **Fade-in transition** on each photo load.
-- **Metadata overlay**: Displays the photo label (location/date) in the bottom-right corner.
-- **Persistent Settings**: Speed, mode, mute state are saved to `slideshow_settings.json` and restored on next launch.
-- **Current state export**: Writes `current.json` at each media change so the web dashboard can display what's currently playing on the Bartop.
+- **7 Photo Display Styles** (cycled at any time with the Style Button `291`):
+  - `Mix Artistique (Auto)` (`auto_art`, *default*) — Automatically alternates between all 5 artistic styles below from photo to photo.
+  - `Ambilight & Duo` (`modern`) — Displays the full photo (`96% × 95%`) inside a sleek frame with drop shadow over a color-matched blurred background, and pairs vertical photos side-by-side (`Duo`).
+  - `Mosaïque Bento (3 Photos)` (`bento`) — Dynamic 3-photo Bento grid collage with simultaneous smooth pan animations and individual location badges.
+  - `Polaroid Vintage` (`polaroid`) — Tilted instant-film Polaroids (`rotozoom`) with warm Kodak color grading, thick cream border, ink-style captions on the bottom chin, and previous Polaroids resting on the background table.
+  - `Magazine Plein Écran` (`magazine`) — 100% edge-to-edge full-screen cover (or 50/50 split-screen for portraits) with a dark bottom cinema gradient and bold XXL editorial typography.
+  - `Néon Bartop (Arcade)` (`arcade`) — Synthwave purple/indigo backdrop with CRT scanlines and glowing Cyan & Magenta neon frames.
+  - `Classique (Origine)` (`classic`) — Original behavior with black background, Ken Burns zoom/pan, and vertical scrolling (`scroll_v`) on portrait photos.
+- **Persistent Settings**: Speed, mode, photo style (`modern`/`classic`), button IDs, and mute state are saved to `slideshow_settings.json` and restored on next launch.
+- **Current state export**: Writes `current.json` at each media change (including active style and Duo photo info) so the web dashboard can display what's currently playing on the Bartop.
 
 ### Controls
 | Input | Action |
 |---|---|
-| **Any button** (except Info/Mode) | Exit slideshow |
+| **Any button** (except Info/Mode/Style) | Exit slideshow |
 | **Any key** | Exit slideshow |
 | **Joystick Left/Right** | Skip to previous/next item |
 | **Joystick Up/Down** | Adjust display speed (photos only) |
-| **Button 1** (ID `289`) in photo mode | Toggle **Info panel** (shows full label, date, source path, countdown) |
+| **Button 1** (ID `289`) in photo mode | Toggle **Info panel** (shows full label, date, source path, active style, countdown) |
 | **Button 1** (ID `289`) in video mode | Toggle **Mute** audio |
-| **Mode Button** (ID `304`) | Cycle through display modes |
-| *While in Info mode* | Press any other button to see its ID (diagnostic) |
+| **Style Button** (ID `291` by default) | Cycle through the **7 photo display styles** (`Mix Auto`, `Ambilight`, `Bento`, `Polaroid`, `Magazine`, `Néon Bartop`, `Classique`) on the fly |
+| **Mode Button** (ID `290` / `304`) | Cycle through display modes (`Photos`, `Vidéos`, `Jeux`, `Cycle Auto`) |
+| *While in Info mode* | Press any button once to see its ID, or **press the same button twice** to assign it as the new **Style Button** |
 
 ### Idle Monitor Configuration
 Edit the constants at the top of [idle_monitor.py](display/idle_monitor.py):
@@ -157,6 +160,8 @@ The slideshow saves its state to `/recalbox/share/userscripts/slideshow/slidesho
 - `display_time`: Default duration per photo in seconds.
 - `info_button`: Button ID for the Info/Mute action (default: `289`).
 - `mode_button`: Button ID for cycling modes (default: `304`).
+- `style_button`: Button ID for toggling between `modern` and `classic` photo styles (default: `291`).
+- `photo_style`: Photo display style (`"modern"` or `"classic"`, default: `"modern"`).
 - `current_mode`: Starting mode (`1`=Photos, `2`=Videos, `3`=Games, `4`=Cycle).
 - `is_muted`: Whether audio starts muted (`true`/`false`).
 
