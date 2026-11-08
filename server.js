@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const convert = require('heic-convert');
 const { Jimp } = require('jimp');
 const exifr = require('exifr');
@@ -151,7 +151,12 @@ app.post('/api/stop', (req, res) => {
 
         // 1. Interrompre le processus enfant géré par le serveur Express
         if (activeProcess) {
-            activeProcess.kill('SIGTERM');
+            if (process.platform === 'win32' && activeProcess.pid) {
+                try { execSync(`taskkill /PID ${activeProcess.pid} /T /F`, { stdio: 'ignore' }); } catch (e) {}
+            } else {
+                activeProcess.kill('SIGTERM');
+            }
+            activeProcess = null;
             processKilled = true;
         }
 
@@ -161,15 +166,24 @@ app.post('/api/stop', (req, res) => {
             const pid = parseInt(pidStr, 10);
             if (!isNaN(pid)) {
                 try {
-                    process.kill(pid, 'SIGTERM');
+                    if (process.platform === 'win32') {
+                        execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore' });
+                    } else {
+                        process.kill(pid, 'SIGTERM');
+                    }
                     processKilled = true;
                 } catch (e) {
                     // Ignorer si le processus est déjà mort
                 }
             }
+            try { fs.unlinkSync(lockFilePath); } catch (e) {}
+            processKilled = true;
         }
 
         if (processKilled) {
+            const stopMsg = `\n--- Tirage interrompu par l'utilisateur (Terminé !) ---\n`;
+            logBuffer.push(stopMsg);
+            sendLogsToClients(stopMsg);
             res.json({ message: 'Tirage interrompu avec succès' });
         } else {
             res.status(400).json({ error: 'Aucun tirage actif à interrompre' });
@@ -293,18 +307,11 @@ app.get('/api/video', (req, res) => {
     const videoId = req.query.id;
     if (!videoPath) return res.status(400).send('Chemin manquant');
 
-    // Si une version MP4 convertie existe sur le Bartop (particulièrement utile pour les .MOV HEVC / .AVI), l'utiliser en priorité
+    // Si une version MP4 convertie existe dans le cache local du PC (évite de verrouiller les fichiers SMB du Bartop), l'utiliser en priorité
     if (videoId && /^\d+$/.test(videoId)) {
-        try {
-            const configData = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
-            if (configData.VIDEO_DEST_DIR) {
-                const convertedPath = path.join(configData.VIDEO_DEST_DIR, `${videoId}.mp4`);
-                if (fs.existsSync(convertedPath)) {
-                    videoPath = convertedPath;
-                }
-            }
-        } catch (e) {
-            // Fallback sur le chemin original
+        const localCacheVideo = path.join(cacheDir, `video_${videoId}.mp4`);
+        if (fs.existsSync(localCacheVideo)) {
+            videoPath = localCacheVideo;
         }
     }
 
@@ -338,6 +345,7 @@ app.get('/api/video', (req, res) => {
 
             const chunksize = (end - start) + 1;
             const file = fs.createReadStream(videoPath, { start, end });
+            req.on('close', () => file.destroy());
             const head = {
                 'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                 'Accept-Ranges': 'bytes',
@@ -353,7 +361,9 @@ app.get('/api/video', (req, res) => {
                 'Content-Type': contentType,
             };
             res.writeHead(200, head);
-            fs.createReadStream(videoPath).pipe(res);
+            const file = fs.createReadStream(videoPath);
+            req.on('close', () => file.destroy());
+            file.pipe(res);
         }
     } catch (e) {
         console.error('Erreur lors de la diffusion de la vidéo :', e);

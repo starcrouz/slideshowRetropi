@@ -556,23 +556,46 @@ async function processVideos(allVideoFiles, onProgress) {
             }
 
             oversizeSkips = 0;
-            const id = (++count).toString().padStart(3, '0');
-            const destName = `${id}.mp4`;
-            const destPath = path.join(config.VIDEO_DEST_DIR, destName);
+            let writtenId = null;
+            let destName = "";
+            let destPath = "";
 
-            // Nettoyage préalable uniquement pour cet index (évite les doublons d'anciennes extensions comme 001.MOV ou 001.AVI)
-            try {
-                const oldFiles = fs.readdirSync(config.VIDEO_DEST_DIR);
-                for (const f of oldFiles) {
-                    if (f.startsWith(id + '.')) {
-                        fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f));
+            // Trouver le premier index disponible non verrouillé sur le partage SMB du Bartop
+            for (let attempt = 0; attempt < 20; attempt++) {
+                const candidateId = (++count).toString().padStart(3, '0');
+                const candidateName = `${candidateId}.mp4`;
+                const candidatePath = path.join(config.VIDEO_DEST_DIR, candidateName);
+
+                try {
+                    const oldFiles = fs.readdirSync(config.VIDEO_DEST_DIR);
+                    for (const f of oldFiles) {
+                        if (f.startsWith(candidateId + '.')) {
+                            try { fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f)); } catch (e) {}
+                        }
                     }
+                } catch (err) {}
+
+                try {
+                    fs.writeFileSync(candidatePath, fs.readFileSync(tempMp4Path));
+                    writtenId = candidateId;
+                    destName = candidateName;
+                    destPath = candidatePath;
+                    break;
+                } catch (writeErr) {
+                    console.warn(`  [Info] Emplacement ${candidateName} verrouillé sur le réseau (${writeErr.code || writeErr.message}), essai de l'emplacement suivant...`);
                 }
-            } catch (err) {
-                // Ignorer les erreurs de nettoyage individuel
             }
 
-            fs.copyFileSync(tempMp4Path, destPath);
+            if (!writtenId) {
+                try { fs.unlinkSync(tempMp4Path); } catch (e) {}
+                console.warn(`  [Avertissement] Impossible d'écrire la vidéo sur le Bartop après plusieurs tentatives.`);
+                break;
+            }
+
+            const id = writtenId;
+            try {
+                fs.copyFileSync(tempMp4Path, path.join(cacheDir, `video_${id}.mp4`));
+            } catch (e) {}
             try { fs.unlinkSync(tempMp4Path); } catch (e) {}
 
             // Extraction Metadata Vidéo
@@ -591,7 +614,9 @@ async function processVideos(allVideoFiles, onProgress) {
                 vidPath // Chemin PC original
             ].join('\n');
 
-            fs.writeFileSync(path.join(config.VIDEO_DEST_DIR, `${id}.txt`), sidecarContent, 'utf8');
+            try {
+                fs.writeFileSync(path.join(config.VIDEO_DEST_DIR, `${id}.txt`), sidecarContent, 'utf8');
+            } catch (e) {}
             currentSizeByte += convStats.size;
 
             const sizeMb = parseFloat((convStats.size / 1024 / 1024).toFixed(1));
@@ -628,7 +653,7 @@ async function processVideos(allVideoFiles, onProgress) {
             if (match) {
                 const fileIndex = parseInt(match[1], 10);
                 if (fileIndex > count) {
-                    fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f));
+                    try { fs.unlinkSync(path.join(config.VIDEO_DEST_DIR, f)); } catch (e) {}
                 }
             }
         }

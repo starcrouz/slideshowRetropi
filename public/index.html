@@ -1595,7 +1595,18 @@
                     const data = await response.json();
                     throw new Error(data.error || 'Impossible d\'interrompre le tirage');
                 }
-                showToast('Demande d\'interruption envoyée !');
+                showToast('Tirage interrompu !');
+                if (window.historyPollInterval) {
+                    clearInterval(window.historyPollInterval);
+                    window.historyPollInterval = null;
+                }
+                document.getElementById('btn-trigger').removeAttribute('disabled');
+                const btnVid = document.getElementById('btn-trigger-videos');
+                if (btnVid) btnVid.removeAttribute('disabled');
+                btnStop.style.display = 'none';
+                btnStop.removeAttribute('disabled');
+                btnStop.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg> Interrompre`;
+                loadHistory(true);
             } catch (e) {
                 showToast(e.message, true);
                 btnStop.removeAttribute('disabled');
@@ -1653,12 +1664,18 @@
                 showToast(e.message, true);
                 btn.removeAttribute('disabled');
                 if (btnVid) btnVid.removeAttribute('disabled');
-                document.getElementById('btn-stop').style.display = 'none';
-                if (window.historyPollInterval) {
-                    clearInterval(window.historyPollInterval);
-                    window.historyPollInterval = null;
+                if (e.message && e.message.includes('déjà en cours')) {
+                    // Laisser le bouton Interrompre visible pour permettre d'arrêter la tâche planifiée en cours
+                    document.getElementById('btn-stop').style.display = 'flex';
+                    terminal.innerText += '\n[INFO] Un tirage (tâche planifiée horaire) est déjà actif en arrière-plan.\nCliquez sur le bouton rouge "Interrompre" si vous souhaitez l\'arrêter immédiatement.\n';
+                } else {
+                    document.getElementById('btn-stop').style.display = 'none';
+                    if (window.historyPollInterval) {
+                        clearInterval(window.historyPollInterval);
+                        window.historyPollInterval = null;
+                    }
                 }
-                loadHistory(); // Recharger le dernier état stable
+                loadHistory(true); // Recharger le dernier état stable
             }
         }
 
