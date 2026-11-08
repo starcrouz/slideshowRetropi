@@ -3,7 +3,7 @@ const path = require('path');
 const { Jimp } = require('jimp');
 const { globSync } = require('glob');
 const convert = require('heic-convert');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const net = require('net');
 const crypto = require('crypto');
 const { createWorker } = require('tesseract.js');
@@ -355,18 +355,85 @@ function isHostOnline(host, port = 445, timeout = 2000) {
     });
 }
 
-function getVideoDuration(filePath) {
+function probeVideo(filePath) {
     try {
-        const cmd = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-        const output = execSync(cmd).toString().trim();
-        const seconds = parseFloat(output);
-        if (isNaN(seconds)) return "";
+        const output = execFileSync(
+            'ffprobe',
+            [
+                '-v', 'error',
+                '-select_streams', 'v:0',
+                '-show_entries', 'stream=codec_name,width,height,pix_fmt,duration:format=duration',
+                '-of', 'json',
+                filePath
+            ],
+            { stdio: ['ignore', 'pipe', 'ignore'], timeout: 15000 }
+        ).toString().trim();
 
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.round(seconds % 60);
-        return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+        const data = JSON.parse(output);
+        if (!data || !Array.isArray(data.streams) || data.streams.length === 0) {
+            return { valid: false, reason: "Aucun flux vidéo détecté" };
+        }
+
+        const stream = data.streams[0];
+        const rawDuration = (data.format && data.format.duration) ? data.format.duration : stream.duration;
+        const durationSec = parseFloat(rawDuration);
+
+        if (isNaN(durationSec) || durationSec <= 0) {
+            return { valid: false, reason: "Durée invalide ou fichier corrompu" };
+        }
+
+        const mins = Math.floor(durationSec / 60);
+        const secs = Math.round(durationSec % 60);
+        const durationStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+
+        return {
+            valid: true,
+            durationSec,
+            durationStr,
+            codec: stream.codec_name || "inconnu",
+            width: stream.width || 0,
+            height: stream.height || 0,
+            pixFmt: stream.pix_fmt || "inconnu"
+        };
     } catch (e) {
-        return "";
+        return { valid: false, reason: "Fichier corrompu ou illisible par ffprobe" };
+    }
+}
+
+function convertVideoForBartop(inputPath, outputPath) {
+    const maxW = config.SCREEN_W || 1280;
+    const maxH = config.SCREEN_H || 1024;
+    // Redimensionne sans dépasser l'écran, force des dimensions paires, 30 fps constants et format 8-bit yuv420p (requis par omxplayer RPi)
+    const vf = `scale='min(${maxW},iw)':'min(${maxH},ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=30,format=yuv420p`;
+
+    execFileSync(
+        'ffmpeg',
+        [
+            '-y',
+            '-v', 'error',
+            '-i', inputPath,
+            '-map', '0:v:0',
+            '-map', '0:a:0?',
+            '-dn',
+            '-sn',
+            '-vf', vf,
+            '-c:v', 'libx264',
+            '-profile:v', 'high',
+            '-level:v', '4.1',
+            '-preset', 'veryfast',
+            '-crf', '23',
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-ac', '2',
+            '-ar', '44100',
+            '-movflags', '+faststart',
+            outputPath
+        ],
+        { stdio: ['ignore', 'ignore', 'pipe'], timeout: 180000 }
+    );
+
+    if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size < 1024) {
+        throw new Error("Fichier MP4 converti vide ou invalide");
     }
 }
 
@@ -409,33 +476,91 @@ async function processImage(photoPath, image, id, total, checkResult, meta) {
     }
 }
 
-async function processVideos(allVideoFiles) {
-    console.log(`\n--- Tirage Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo) ---`);
+async function processVideos(allVideoFiles, onProgress) {
+    const minDurationSec = typeof config.VIDEO_MIN_DURATION_SEC === 'number' ? config.VIDEO_MIN_DURATION_SEC : 4;
+    const maxDurationSec = 180; // Max 3 minutes par vidéo pour éviter les longs films
+    console.log(`\n--- Tirage & Conversion Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo, durée min ${minDurationSec}s) ---`);
 
     if (!fs.existsSync(config.VIDEO_DEST_DIR)) {
         fs.mkdirSync(config.VIDEO_DEST_DIR, { recursive: true });
     }
 
+    const cacheDir = path.join(__dirname, '.cache');
+    if (!fs.existsSync(cacheDir)) {
+        fs.mkdirSync(cacheDir, { recursive: true });
+    }
+    const tempMp4Path = path.join(cacheDir, `tmp_bartop_vid_${process.pid}.mp4`);
+
     const filteredFiles = allVideoFiles.filter(v => {
-        const stats = fs.statSync(v);
-        return stats.size >= 1 * 1024 * 1024;
+        try {
+            if (config.ENABLE_QUALITY_FILTERS && Array.isArray(config.FILTER_FORBIDDEN_KEYWORDS)) {
+                const lower = v.toLowerCase();
+                for (const kw of config.FILTER_FORBIDDEN_KEYWORDS) {
+                    if (lower.includes(kw.toLowerCase())) return false;
+                }
+            }
+            const stats = fs.statSync(v);
+            // Au moins 500 Ko et max 500 Mo en source (une vidéo 4K iPhone de 200 Mo fera ~15 Mo après conversion H.264)
+            return stats.size >= 512 * 1024 && stats.size <= 500 * 1024 * 1024;
+        } catch (e) {
+            return false;
+        }
     });
 
     const shuffled = filteredFiles.sort(() => 0.5 - Math.random());
     let currentSizeByte = 0;
     const limitByte = config.VIDEO_LIMIT_MB * 1024 * 1024;
     let count = 0;
+    let oversizeSkips = 0;
     const selectedVideosResult = [];
 
-    for (const vidPath of shuffled) {
-        const stats = fs.statSync(vidPath);
-        if (currentSizeByte + stats.size <= limitByte) {
+    try {
+        for (const vidPath of shuffled) {
+            if (limitByte - currentSizeByte < 1 * 1024 * 1024) break;
+
+            const probe = probeVideo(vidPath);
+            if (!probe.valid) {
+                console.log(`  [Vidéo écartée] ${path.basename(vidPath)} : ${probe.reason}`);
+                continue;
+            }
+
+            if (probe.durationSec < minDurationSec) {
+                console.log(`  [Vidéo écartée] ${path.basename(vidPath)} : Trop courte (${probe.durationSec.toFixed(1)}s < ${minDurationSec}s, Live Photo probable)`);
+                continue;
+            }
+
+            if (probe.durationSec > maxDurationSec) {
+                console.log(`  [Vidéo écartée] ${path.basename(vidPath)} : Trop longue (${probe.durationStr} > 3m)`);
+                continue;
+            }
+
+            const srcStats = fs.statSync(vidPath);
+            console.log(`  [Conversion] ${path.basename(vidPath)} (${probe.codec.toUpperCase()} ${probe.width}x${probe.height}, ${probe.durationStr}, ${(srcStats.size / 1024 / 1024).toFixed(1)} Mo) -> MP4 H.264...`);
+
+            try {
+                convertVideoForBartop(vidPath, tempMp4Path);
+            } catch (convErr) {
+                console.log(`  [Vidéo écartée] Échec conversion FFmpeg pour ${path.basename(vidPath)} : ${convErr.message}`);
+                continue;
+            }
+
+            const convStats = fs.statSync(tempMp4Path);
+            if (currentSizeByte + convStats.size > limitByte) {
+                try { fs.unlinkSync(tempMp4Path); } catch (e) {}
+                oversizeSkips++;
+                console.log(`  [Quota] ${path.basename(vidPath)} (${(convStats.size / 1024 / 1024).toFixed(1)} Mo convertie) dépasse l'espace restant (${((limitByte - currentSizeByte) / 1024 / 1024).toFixed(1)} Mo).`);
+                if (oversizeSkips >= 3 || (limitByte - currentSizeByte) < 3 * 1024 * 1024) {
+                    break;
+                }
+                continue;
+            }
+
+            oversizeSkips = 0;
             const id = (++count).toString().padStart(3, '0');
-            const ext = path.extname(vidPath);
-            const destName = `${id}${ext}`;
+            const destName = `${id}.mp4`;
             const destPath = path.join(config.VIDEO_DEST_DIR, destName);
 
-            // Nettoyage préalable uniquement pour cet index (évite les doublons d'extensions comme 001.mp4 et 001.mkv)
+            // Nettoyage préalable uniquement pour cet index (évite les doublons d'anciennes extensions comme 001.MOV ou 001.AVI)
             try {
                 const oldFiles = fs.readdirSync(config.VIDEO_DEST_DIR);
                 for (const f of oldFiles) {
@@ -447,13 +572,13 @@ async function processVideos(allVideoFiles) {
                 // Ignorer les erreurs de nettoyage individuel
             }
 
-            console.log(`[Video ${id}] ${path.basename(vidPath)} (${(stats.size / 1024 / 1024).toFixed(1)} Mo)`);
-            fs.copyFileSync(vidPath, destPath);
+            fs.copyFileSync(tempMp4Path, destPath);
+            try { fs.unlinkSync(tempMp4Path); } catch (e) {}
 
             // Extraction Metadata Vidéo
             const label = getBestFolderLabel(vidPath, config);
             const date = extractDateFromPath(vidPath, config);
-            const duration = getVideoDuration(vidPath);
+            const duration = probe.durationStr;
 
             let finalLabel = "";
             if (label && date) finalLabel = `${capitalize(label)} - ${date}`;
@@ -467,20 +592,34 @@ async function processVideos(allVideoFiles) {
             ].join('\n');
 
             fs.writeFileSync(path.join(config.VIDEO_DEST_DIR, `${id}.txt`), sidecarContent, 'utf8');
-            currentSizeByte += stats.size;
+            currentSizeByte += convStats.size;
+
+            const sizeMb = parseFloat((convStats.size / 1024 / 1024).toFixed(1));
+            console.log(`[Video ${id}] ${path.basename(vidPath)} -> ${destName} (${sizeMb} Mo, ${duration})`);
 
             selectedVideosResult.push({
                 path: vidPath,
                 label: finalLabel || "Vidéo Perso",
                 duration: duration || "Durée inconnue",
-                sizeMb: parseFloat((stats.size / 1024 / 1024).toFixed(1)),
+                sizeMb: sizeMb,
                 id: id,
                 filename: path.basename(vidPath)
             });
+
+            if (typeof onProgress === 'function') {
+                onProgress(selectedVideosResult);
+            }
+
+            if (currentSizeByte >= limitByte) break;
         }
-        if (currentSizeByte >= limitByte) break;
+    } finally {
+        try {
+            if (fs.existsSync(tempMp4Path)) {
+                fs.unlinkSync(tempMp4Path);
+            }
+        } catch (e) {}
     }
-    
+
     // Nettoyage des anciennes vidéos en trop
     try {
         const oldFiles = fs.readdirSync(config.VIDEO_DEST_DIR);
@@ -501,12 +640,13 @@ async function processVideos(allVideoFiles) {
     return selectedVideosResult;
 }
 
-async function start() {
+async function start(options = {}) {
+    const videosOnly = Boolean(options.videosOnly || process.argv.includes('--videos-only'));
     if (!acquireLock()) {
         console.log("Fin du script car un autre tirage est actif.");
         return;
     }
-    console.log("--- Lancement du tirage intelligent ---");
+    console.log(videosOnly ? "--- Lancement du tirage Vidéos uniquement ---" : "--- Lancement du tirage intelligent ---");
 
     try {
         const host = getHostFromPath(config.DEST_DIR);
@@ -526,6 +666,29 @@ async function start() {
             return;
         }
 
+        // Synchronisation automatique des scripts Python (slideshow.py / idle_monitor.py) vers le Bartop
+        try {
+            const bartopScriptDir = path.dirname(config.DEST_DIR);
+            for (const scriptName of ['slideshow.py', 'idle_monitor.py']) {
+                const localScript = path.join(__dirname, 'display', scriptName);
+                const remoteScript = path.join(bartopScriptDir, scriptName);
+                if (fs.existsSync(localScript)) {
+                    const localBuf = fs.readFileSync(localScript);
+                    let needCopy = true;
+                    if (fs.existsSync(remoteScript)) {
+                        const remoteBuf = fs.readFileSync(remoteScript);
+                        if (localBuf.equals(remoteBuf)) needCopy = false;
+                    }
+                    if (needCopy) {
+                        fs.writeFileSync(remoteScript, localBuf);
+                        console.log(`[Sync Bartop] Script mis à jour sur le Bartop : ${scriptName}`);
+                    }
+                }
+            }
+        } catch (syncErr) {
+            console.warn(`[Avertissement] Impossible de synchroniser les scripts Bartop : ${syncErr.message}`);
+        }
+
         const photoPattern = config.SOURCE_DIR.replace(/\\/g, '/') + '/**/*.{jpg,JPG,jpeg,JPEG,heic,HEIC}';
         const allPhotos = globSync(photoPattern);
         console.log(`Photos trouvées : ${allPhotos.length}`);
@@ -535,12 +698,14 @@ async function start() {
         console.log(`Vidéos trouvées : ${allVideos.length}`);
 
         let previousSelected = [];
+        let previousRejected = [];
         let previousVideos = [];
         const reportFilePath = path.join(__dirname, 'last_run.json');
         if (fs.existsSync(reportFilePath)) {
             try {
                 const prevData = JSON.parse(fs.readFileSync(reportFilePath, 'utf8'));
                 if (Array.isArray(prevData.selected)) previousSelected = prevData.selected;
+                if (Array.isArray(prevData.rejected)) previousRejected = prevData.rejected;
                 if (Array.isArray(prevData.videos)) previousVideos = prevData.videos;
             } catch (e) {
                 // Ignorer si illisible
@@ -553,10 +718,10 @@ async function start() {
                 totalPhotos: allPhotos.length,
                 totalVideos: allVideos.length,
                 selected: previousSelected.length,
-                rejected: 0
+                rejected: videosOnly ? previousRejected.length : 0
             },
             selected: [...previousSelected],
-            rejected: [],
+            rejected: videosOnly ? [...previousRejected] : [],
             videos: [...previousVideos]
         };
 
@@ -572,7 +737,7 @@ async function start() {
         // Écriture initiale conservant les photos déjà présentes sur le Bartop
         writeReport();
         
-        if (allPhotos.length > 0) {
+        if (!videosOnly && allPhotos.length > 0) {
             const shuffled = allPhotos.sort(() => 0.5 - Math.random());
             let count = 0;
             const maxAttempts = Math.min(shuffled.length, config.NB_IMAGES * 5);
@@ -596,9 +761,10 @@ async function start() {
                 }
 
                 const photoPath = shuffled[i];
+                let meta = null;
                 try {
                     // 1. Lire les métadonnées en premier pour optimiser et récupérer l'orientation
-                    const meta = await getPhotoMetadata(photoPath, config);
+                    meta = await getPhotoMetadata(photoPath, config);
 
                     // Validation préliminaire rapide via les métadonnées (évite de charger et décoder l'image inutilement)
                     const preCheck = validateMetadata(photoPath, meta);
@@ -791,7 +957,10 @@ async function start() {
         }
 
         if (allVideos.length > 0) {
-            const selectedVids = await processVideos(allVideos);
+            const selectedVids = await processVideos(allVideos, (currentVids) => {
+                runReport.videos = [...currentVids];
+                writeReport();
+            });
             runReport.videos = selectedVids || [];
             writeReport();
         }

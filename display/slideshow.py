@@ -854,6 +854,9 @@ def run_slideshow(enable_animation=True):
     last_nav_time = 0
     last_speed_time = 0
     video_proc = None
+    video_start_time = 0
+    VIDEO_MAX_PLAY_SECONDS = 210
+    devnull_f = open(os.devnull, 'wb')
 
     def find_partner_photo(start_ptr, want_vertical=None, exclude_offsets=None):
         """Cherche une photo suivante compatible dans la liste mélangée."""
@@ -1033,11 +1036,18 @@ def run_slideshow(enable_animation=True):
                                 video_proc = None
 
             # --- 4. LOGIQUE CHARGEMENT ---
-            if video_proc and video_proc.poll() is not None:
-                video_proc = None
-                if indices:
-                    current_idx_ptr = (current_idx_ptr + 1) % len(indices)
-                need_load = True
+            if video_proc:
+                if video_proc.poll() is not None:
+                    video_proc = None
+                    if indices:
+                        current_idx_ptr = (current_idx_ptr + 1) % len(indices)
+                    need_load = True
+                elif now - video_start_time > VIDEO_MAX_PLAY_SECONDS:
+                    stop_video(video_proc)
+                    video_proc = None
+                    if indices:
+                        current_idx_ptr = (current_idx_ptr + 1) % len(indices)
+                    need_load = True
 
             if need_load and now < mode_overlay_timer:
                 pass
@@ -1567,8 +1577,14 @@ def run_slideshow(enable_animation=True):
                     if is_muted:
                         cmd += ["--vol", "-6000"]
                     cmd.append(file_path)
-                    video_proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
-                    need_load = False
+                    try:
+                        video_proc = subprocess.Popen(cmd, stdout=devnull_f, stderr=devnull_f, preexec_fn=os.setsid)
+                        video_start_time = now
+                        need_load = False
+                    except Exception:
+                        video_proc = None
+                        current_idx_ptr = (current_idx_ptr + 1) % len(indices)
+                        need_load = True
 
             if not need_load and not show_info and internal_mode == MODE_PHOTOS and now - last_switch > display_time:
                 current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
@@ -1774,6 +1790,10 @@ def run_slideshow(enable_animation=True):
     finally:
         if video_proc:
             stop_video(video_proc)
+        try:
+            devnull_f.close()
+        except Exception:
+            pass
         for f in input_files:
             f.close()
         pygame.quit()

@@ -15,14 +15,14 @@ Maintains a selection of optimized photos from your library and transfers them t
 - **Quality Filtering**: Excludes blurry, low-resolution, badly proportioned, or text-heavy images based on customizable thresholds.
 - **OCR Detection**: Uses Tesseract to detect and reject images containing too much text (screenshots, documents, memes…).
 - **Metadata Enrichment**: Reads EXIF data to generate `.txt` sidecar files with location labels (city/country), date, and source path. Handles HEIC/iPhone photos natively.
-- **Video Support**: Copies personal videos to the Bartop alongside photos (configurable size limit).
+- **Video Support**: Validates videos with `ffprobe` (excluding corrupted files and short iPhone Live Photos) and automatically transcodes them with `ffmpeg` into Raspberry Pi hardware-compatible `.mp4` (`H.264 8-bit yuv420p`, `AAC`, max `1280x1024` @ `30fps`).
 - **Smart Shuffling**: In-place overwriting of destination files to avoid slideshow downtime.
 - **Lock File**: Prevents concurrent runs (via scheduler or dashboard).
 
 ### Installation & Usage
 1. `npm install`
 2. Configure `config.json` (see settings below).
-3. Run manually: `node index.js`
+3. Run manually: `node index.js` (or `node index.js --videos-only` to refresh and transcode only videos while keeping existing photos).
 
 ### `config.json` Parameters
 
@@ -33,7 +33,8 @@ Maintains a selection of optimized photos from your library and transfers them t
 | `VIDEO_DEST_DIR` | Network destination for personal videos |
 | `NB_IMAGES` | Number of photos to select (default: `100`) |
 | `SCREEN_W` / `SCREEN_H` | Target screen resolution (used for aspect ratio filtering) |
-| `VIDEO_LIMIT_MB` | Maximum size of a video file to copy (in MB) |
+| `VIDEO_LIMIT_MB` | Maximum total size of converted videos to transfer (in MB) |
+| `VIDEO_MIN_DURATION_SEC` | Minimum video duration in seconds (default: `4`, excludes iPhone Live Photos) |
 | `CITY_OVERRIDES` | Rename specific detected cities (e.g. suburbs → city center) |
 | `COUNTRY_NAMES` | Translate ISO country codes to display names |
 | `GENERIC_FOLDERS` | Folder names to ignore when building location labels |

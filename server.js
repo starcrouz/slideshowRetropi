@@ -119,8 +119,11 @@ app.post('/api/run', (req, res) => {
         return res.status(400).json({ error: 'Un tirage est déjà en cours de traitement (via le serveur ou la tâche planifiée)' });
     }
 
+    const videosOnly = Boolean(req.body && req.body.videosOnly);
+    const args = videosOnly ? ['index.js', '--videos-only'] : ['index.js'];
+
     logBuffer = [];
-    activeProcess = spawn('node', ['index.js'], { cwd: __dirname });
+    activeProcess = spawn('node', args, { cwd: __dirname });
 
     const handleData = (data) => {
         const text = data.toString();
@@ -286,8 +289,25 @@ app.get('/api/photo', async (req, res) => {
 
 // API: Servir les vidéos avec Range Requests (HTTP 206)
 app.get('/api/video', (req, res) => {
-    const videoPath = req.query.path;
+    let videoPath = req.query.path;
+    const videoId = req.query.id;
     if (!videoPath) return res.status(400).send('Chemin manquant');
+
+    // Si une version MP4 convertie existe sur le Bartop (particulièrement utile pour les .MOV HEVC / .AVI), l'utiliser en priorité
+    if (videoId && /^\d+$/.test(videoId)) {
+        try {
+            const configData = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+            if (configData.VIDEO_DEST_DIR) {
+                const convertedPath = path.join(configData.VIDEO_DEST_DIR, `${videoId}.mp4`);
+                if (fs.existsSync(convertedPath)) {
+                    videoPath = convertedPath;
+                }
+            }
+        } catch (e) {
+            // Fallback sur le chemin original
+        }
+    }
+
     if (!fs.existsSync(videoPath)) return res.status(404).send('Fichier introuvable');
 
     try {

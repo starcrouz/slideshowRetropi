@@ -742,10 +742,14 @@
                         <div id="stat-date" style="color: #a5b4fc; font-weight: 500; font-size: 0.95rem;">-</div>
                     </div>
                     
-                    <div style="display: flex; gap: 1rem; width: 100%;">
-                        <button class="btn-run" id="btn-trigger" onclick="runSelector()" style="flex: 1;">
+                    <div style="display: flex; gap: 0.75rem; width: 100%; flex-wrap: wrap;">
+                        <button class="btn-run" id="btn-trigger" onclick="runSelector(false)" style="flex: 1;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                             Lancer le Tirage
+                        </button>
+                        <button class="btn btn-secondary" id="btn-trigger-videos" onclick="runSelector(true)" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.9rem 1.1rem;" title="Relancer uniquement la sélection et la conversion des vidéos">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            Vidéos seules
                         </button>
                         <button class="btn" id="btn-stop" onclick="stopSelector()" style="display: none; background: linear-gradient(135deg, var(--accent-red) 0%, #dc2626 100%); color: white; border: none; flex: 1; font-weight: 700; font-family: 'Outfit', sans-serif; font-size: 1.1rem; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4); justify-content: center; align-items: center; gap: 0.75rem;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
@@ -867,14 +871,19 @@
                         <span class="description">Chemin réseau d'écriture pour les vidéos persos.</span>
                     </div>
                     
-                    <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div class="form-group">
-                            <label for="NB_IMAGES">Nombre maximal de photos</label>
+                            <label for="NB_IMAGES">Nombre max photos</label>
                             <input type="number" class="form-input" id="NB_IMAGES" min="1" max="1000" required>
                         </div>
                         <div class="form-group">
-                            <label for="VIDEO_LIMIT_MB">Limite stockage vidéos (Mo)</label>
+                            <label for="VIDEO_LIMIT_MB">Stockage vidéos (Mo)</label>
                             <input type="number" class="form-input" id="VIDEO_LIMIT_MB" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="VIDEO_MIN_DURATION_SEC">Durée vidéo min (s)</label>
+                            <input type="number" class="form-input" id="VIDEO_MIN_DURATION_SEC" min="1" max="60" required>
+                            <span class="description">Ignore les Live Photos (&lt; 4s).</span>
                         </div>
                     </div>
                 </div>
@@ -1372,7 +1381,7 @@
             
             // Afficher et lire la vidéo avec le son
             videoEl.style.display = 'block';
-            videoEl.src = `/api/video?path=${encodeURIComponent(video.path)}`;
+            videoEl.src = `/api/video?path=${encodeURIComponent(video.path)}&id=${encodeURIComponent(video.id || '')}`;
             videoEl.play().catch(e => console.warn(e));
 
             title.innerText = video.filename;
@@ -1441,10 +1450,12 @@
                     terminal.innerText = data.logs;
                     terminal.scrollTop = terminal.scrollHeight;
                     // Détecter si une exécution est déjà active lors de la connexion
-                    const hasStart = data.logs.includes('Lancement du tirage intelligent');
+                    const hasStart = data.logs.includes('Lancement du tirage');
                     const hasEnd = data.logs.includes('Terminé !') || data.logs.includes('Fin du script sans modification.');
                     if (hasStart && !hasEnd) {
                         document.getElementById('btn-trigger').setAttribute('disabled', 'true');
+                        const btnVid = document.getElementById('btn-trigger-videos');
+                        if (btnVid) btnVid.setAttribute('disabled', 'true');
                         document.getElementById('btn-stop').style.display = 'flex';
                         if (!window.historyPollInterval) {
                             window.historyPollInterval = setInterval(loadHistory, 1500);
@@ -1461,6 +1472,8 @@
                         }
                         loadHistory();
                         document.getElementById('btn-trigger').removeAttribute('disabled');
+                        const btnVid = document.getElementById('btn-trigger-videos');
+                        if (btnVid) btnVid.removeAttribute('disabled');
                         
                         const btnStop = document.getElementById('btn-stop');
                         btnStop.style.display = 'none';
@@ -1498,7 +1511,7 @@
             });
 
             data.forEach((video, index) => {
-                const videoUrl = `/api/video?path=${encodeURIComponent(video.path)}`;
+                const videoUrl = `/api/video?path=${encodeURIComponent(video.path)}&id=${encodeURIComponent(video.id || '')}`;
                 let card = Array.from(grid.children).find(child => child.getAttribute('data-path') === video.path);
 
                 const cardContent = `
@@ -1591,26 +1604,32 @@
         }
 
         // Lancer la sélection
-        async function runSelector() {
+        async function runSelector(videosOnly = false) {
             const btn = document.getElementById('btn-trigger');
+            const btnVid = document.getElementById('btn-trigger-videos');
             const terminal = document.getElementById('console-terminal');
             
             btn.setAttribute('disabled', 'true');
+            if (btnVid) btnVid.setAttribute('disabled', 'true');
             document.getElementById('btn-stop').style.display = 'flex';
-            terminal.innerText = 'Démarrage du processus de tirage...\n';
+            terminal.innerText = videosOnly
+                ? 'Démarrage du tirage Vidéos uniquement...\n'
+                : 'Démarrage du processus de tirage...\n';
             
             // Réinitialiser immédiatement l'affichage local
-            document.getElementById('stat-total').innerText = '0';
-            document.getElementById('stat-selected').innerText = '0';
-            document.getElementById('stat-rejected').innerText = '0';
-            document.getElementById('count-selected').innerText = '0';
-            document.getElementById('count-rejected').innerText = '0';
+            if (!videosOnly) {
+                document.getElementById('stat-total').innerText = '0';
+                document.getElementById('stat-selected').innerText = '0';
+                document.getElementById('stat-rejected').innerText = '0';
+                document.getElementById('count-selected').innerText = '0';
+                document.getElementById('count-rejected').innerText = '0';
+                selectedPhotosData = [];
+                rejectedPhotosData = [];
+                renderGallery('selected');
+                renderGallery('rejected');
+            }
             document.getElementById('count-videos').innerText = '0';
-            selectedPhotosData = [];
-            rejectedPhotosData = [];
             videosData = [];
-            renderGallery('selected');
-            renderGallery('rejected');
             renderVideos();
 
             // Lancer le polling toutes les 1,5 secondes pendant la durée du traitement
@@ -1620,15 +1639,20 @@
             window.historyPollInterval = setInterval(loadHistory, 1500);
 
             try {
-                const response = await fetch('/api/run', { method: 'POST' });
+                const response = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ videosOnly })
+                });
                 if (!response.ok) {
                     const data = await response.json();
                     throw new Error(data.error || 'Impossible de démarrer le tirage');
                 }
-                showToast('Tirage lancé en arrière-plan !');
+                showToast(videosOnly ? 'Tirage vidéos lancé !' : 'Tirage lancé en arrière-plan !');
             } catch (e) {
                 showToast(e.message, true);
                 btn.removeAttribute('disabled');
+                if (btnVid) btnVid.removeAttribute('disabled');
                 document.getElementById('btn-stop').style.display = 'none';
                 if (window.historyPollInterval) {
                     clearInterval(window.historyPollInterval);
