@@ -17,10 +17,10 @@ import re
 import math
 
 # --- CONFIGURATION PAR DÉFAUT ---
-# Boutons du dessus connus (Panel Arcade J1/J2)
-TOP_BUTTONS_DEFAULT = [288, 289, 290, 291, 292, 293, 304, 305, 306, 307, 308, 309, 310, 311]
 # Boutons de devant (Façade : Start, Select, Coin, Hotkey) qui provoquent la sortie
-FRONT_BUTTONS_DEFAULT = [294, 295, 296, 297, 298, 299, 312, 313, 314, 315, 316, 317, 318]
+# Xin-Mo Dual Arcade: 296 (Select J1), 297 (Start J1), 312 (Select J2 / Hotkey), 313/315 (Start J2)
+# Les codes 288..293 et 304..311 sont les 6 boutons de jeu de chaque joueur (A, B, X, Y, L, R)
+FRONT_BUTTONS_DEFAULT = [296, 297, 312, 313, 314, 315]
 
 IMAGE_FOLDER = "/recalbox/share/userscripts/slideshow/images"
 VIDEO_PERSO_FOLDER = "/recalbox/share/userscripts/slideshow/videos"
@@ -111,7 +111,6 @@ ABS_HAT0Y = 17
 def load_settings():
     defaults = {
         "display_time": DEFAULT_DISPLAY_TIME,
-        "top_buttons": list(TOP_BUTTONS_DEFAULT),
         "front_buttons": list(FRONT_BUTTONS_DEFAULT),
         "current_mode": MODE_CYCLE,
         "photo_style": STYLE_AUTO_ART,
@@ -127,10 +126,15 @@ def load_settings():
             pass
     if defaults.get("photo_style") not in STYLE_ORDER:
         defaults["photo_style"] = STYLE_AUTO_ART
-    if not isinstance(defaults.get("top_buttons"), list) or not defaults.get("top_buttons"):
-        defaults["top_buttons"] = list(TOP_BUTTONS_DEFAULT)
-    if not isinstance(defaults.get("front_buttons"), list) or not defaults.get("front_buttons"):
-        defaults["front_buttons"] = list(FRONT_BUTTONS_DEFAULT)
+    PANEL_BUTTON_CODES = set(range(288, 296)) | set(range(304, 312))
+    raw_front = defaults.get("front_buttons")
+    if isinstance(raw_front, list):
+        cleaned_front = [b for b in raw_front if b not in PANEL_BUTTON_CODES]
+    else:
+        cleaned_front = list(FRONT_BUTTONS_DEFAULT)
+    if not cleaned_front:
+        cleaned_front = list(FRONT_BUTTONS_DEFAULT)
+    defaults["front_buttons"] = cleaned_front
     return defaults
 
 
@@ -339,27 +343,26 @@ def make_scanline_overlay(sw, sh):
 
 
 def make_blurred_background(img1, sw, sh, img2=None, tint=(125, 128, 138), vignette_surf=None):
-    """Génère un fond flouté Ambilight (solo ou duo fusionné) rapide et assombri."""
-    work_w, work_h = max(16, sw // 6), max(12, sh // 6)
+    """Génère un fond flouté Ambilight (solo ou duo fusionné) ultra-rapide et assombri."""
+    work_w, work_h = max(16, sw // 8), max(12, sh // 8)
     base24 = pygame.Surface((work_w, work_h), 0, 24)
 
     if img2 is None:
         cropped = crop_to_aspect(img1, sw, sh)
-        scaled = safe_smoothscale(cropped, (work_w, work_h))
+        scaled = pygame.transform.scale(cropped, (work_w, work_h))
         base24.blit(scaled, (0, 0))
     else:
         half_w = work_w // 2
         c1 = crop_to_aspect(img1, sw // 2, sh)
         c2 = crop_to_aspect(img2, sw - sw // 2, sh)
-        s1 = safe_smoothscale(c1, (half_w, work_h))
-        s2 = safe_smoothscale(c2, (work_w - half_w, work_h))
+        s1 = pygame.transform.scale(c1, (half_w, work_h))
+        s2 = pygame.transform.scale(c2, (work_w - half_w, work_h))
         base24.blit(s1, (0, 0))
         base24.blit(s2, (half_w, 0))
 
-    tiny1 = safe_smoothscale(base24, (max(8, sw // 32), max(6, sh // 32)))
-    tiny2 = safe_smoothscale(tiny1, (max(6, sw // 44), max(5, sh // 44)))
-    mid = safe_smoothscale(tiny2, (max(16, sw // 10), max(12, sh // 10)))
-    bg = safe_smoothscale(mid, (sw, sh)).convert()
+    # Flou Ambilight instantané en 2 étapes au lieu de 5 itérations lourdes
+    tiny = pygame.transform.scale(base24, (32, 24))
+    bg = safe_smoothscale(tiny, (sw, sh)).convert()
 
     dark = pygame.Surface((sw, sh)).convert()
     dark.fill(tint)
@@ -877,14 +880,14 @@ def draw_info_overlay(screen, sw, sh, current_mode, internal_mode, photo_style, 
 
 
 def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode, photo_style, is_muted, display_time,
-                       top_buttons, learning_button_timer, last_learned_code,
-                       remain_sec, font_main, font_small, font_regular, font_tiny):
-    mw = int(sw * 0.80)
-    mh = int(sh * 0.70)
+                       remain_sec, font_main, font_small, font_regular, font_tiny,
+                       learning_button_timer=0.0, last_learned_code=None):
+    mw = int(sw * 0.78)
+    mh = int(sh * 0.65)
     mx = (sw - mw) // 2
     my = (sh - mh) // 2
 
-    box = create_rounded_box(mw, mh, 20, (10, 14, 26), border_color=(99, 102, 241), alpha=244, border_width=3)
+    box = create_rounded_box(mw, mh, 20, (10, 14, 26), border_color=(99, 102, 241), alpha=242, border_width=3)
     screen.blit(box, (mx, my))
 
     # En-tête du menu
@@ -911,14 +914,12 @@ def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode
     sound_val = u"◀ Coupé (Muet) ▶" if is_muted else u"◀ Actif (Son) ▶"
     speed_val = u"◀ %s ▶" % format_cadence_label(display_time)
 
-    # Ligne d'apprentissage de bouton
-    now = time.time()
-    if now < learning_button_timer:
-        learn_val = u"🎯 Cliquez un bouton pour l'ajouter !"
-    elif last_learned_code:
-        learn_val = u"✅ Bouton %d ajouté aux boutons Menu !" % last_learned_code
+    if learning_button_timer > 0:
+        detect_val = u"En écoute... Appuyez sur un bouton"
+    elif last_learned_code is not None:
+        detect_val = u"Dernier code : %s" % str(last_learned_code)
     else:
-        learn_val = u"◀ ➕ Détecter & ajouter bouton ▶"
+        detect_val = u"◀ Tester / Détecter ▶"
 
     close_val = u"↩ Reprendre le diaporama"
 
@@ -927,7 +928,7 @@ def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode
         (u"Style des photos", u"▲/▼ sur photo", style_val, False),
         (u"Son des vidéos", u"▲/▼ sur vidéo", sound_val, False),
         (u"Cadence des photos", None, speed_val, False),
-        (u"Ajouter bouton Menu", u"%d actifs" % len(top_buttons), learn_val, False),
+        (u"Tester bouton", u"Menu avancé", detect_val, False),
         (u"Fermer le menu", u"ou 1 clic bouton", close_val, True)
     ]
 
@@ -964,7 +965,7 @@ def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode
             b_surf = font_tiny.render(badge_str, True, (34, 211, 238))
             bw = b_surf.get_width() + 16
             bh = b_surf.get_height() + 6
-            bx = rx + 24 + lbl_surf.get_width()
+            bx = rx + 26 + lbl_surf.get_width()
             by = ry + (row_h - bh) // 2
             bbox = create_rounded_box(bw, bh, 6, (15, 30, 50), border_color=(34, 211, 238), alpha=215, border_width=1)
             screen.blit(bbox, (bx, by))
@@ -976,7 +977,7 @@ def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode
 
     # Pied du menu
     pygame.draw.line(screen, (38, 48, 74), (mx + 24, my + mh - 44), (mx + mw - 24, my + mh - 44), 1)
-    foot_left = font_tiny.render(u"Manette ▲/▼ : Naviguer   |   ◀/▶ : Modifier   |   Boutons façade : Quitter", True, (160, 174, 198))
+    foot_left = font_tiny.render(u"Manette ▲/▼ : Naviguer   |   ◀/▶ : Modifier la valeur", True, (160, 174, 198))
     foot_right = font_tiny.render(u"1 clic bouton : Fermer", True, (165, 180, 252))
     screen.blit(foot_left, (mx + 28, my + mh - 30))
     screen.blit(foot_right, (mx + mw - foot_right.get_width() - 28, my + mh - 30))
@@ -1003,7 +1004,6 @@ def run_slideshow(enable_animation=True):
 
     settings = load_settings()
     display_time = float(settings.get("display_time", DEFAULT_DISPLAY_TIME))
-    top_buttons = set(settings.get("top_buttons", TOP_BUTTONS_DEFAULT))
     front_buttons = set(settings.get("front_buttons", FRONT_BUTTONS_DEFAULT))
     current_mode = settings.get("current_mode", MODE_CYCLE)
     photo_style = settings.get("photo_style", STYLE_AUTO_ART)
@@ -1129,9 +1129,10 @@ def run_slideshow(enable_animation=True):
     last_top_btn_time = 0.0
     DOUBLE_CLICK_BTN_THRESHOLD = 0.50
 
-    last_horiz_tap_dir = 0
-    last_horiz_tap_time = 0.0
-    DOUBLE_TAP_JOY_THRESHOLD = 0.70
+    cycle_tap_pending = 0
+    cycle_tap_time = 0.0
+    forced_style = None
+    cached_scene = None
 
     joy_axis_x_neutral = True
     joy_axis_y_neutral = True
@@ -1152,6 +1153,93 @@ def run_slideshow(enable_animation=True):
 
     toast_State = [u"", (56, 189, 248), 0.0]
 
+    def draw_screen_feedback():
+        if toast_State[0]:
+            draw_corner_toast(screen, sw, sh, toast_State[0], font_small, accent_color=toast_State[1])
+            pygame.display.flip()
+
+    def handle_top_button(now_ts):
+        nonlocal overlay_level, overlay_deadline, menu_selected_row, last_top_btn_time, video_proc, need_load
+        if now_ts - last_top_btn_time < 0.08:
+            return
+        is_double_click = (now_ts - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
+        last_top_btn_time = now_ts
+
+        if is_double_click:
+            last_top_btn_time = 0.0
+            overlay_level = 2
+            menu_selected_row = 0
+            overlay_deadline = now_ts + MENU_DURATION
+            if video_proc:
+                stop_video(video_proc)
+                video_proc = None
+        else:
+            if overlay_level == 0:
+                overlay_level = 1
+                overlay_deadline = now_ts + INFO_DURATION
+                if video_proc:
+                    stop_video(video_proc)
+                    video_proc = None
+            else:
+                was_video = (internal_mode != MODE_PHOTOS)
+                overlay_level = 0
+                if was_video and video_proc is None:
+                    need_load = True
+
+    def trigger_navigation(steer_val):
+        nonlocal current_idx_ptr, current_step, need_load, forced_style, modern_scene, nav_forward_stack, video_proc
+        if not indices:
+            return
+        cached = None
+        if steer_val > 0:
+            # Avance (▶)
+            nav_history.append({
+                "ptr": current_idx_ptr,
+                "step": current_step,
+                "style": active_render_style,
+                "scene": modern_scene
+            })
+            if len(nav_history) > 30:
+                nav_history.pop(0)
+            if nav_forward_stack:
+                hist_item = nav_forward_stack.pop()
+                current_idx_ptr = hist_item["ptr"]
+                forced_style = hist_item.get("style")
+                cached = hist_item.get("scene")
+            else:
+                current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
+                forced_style = None
+            show_toast(u"Suivant ▶", (56, 189, 248))
+        else:
+            # Retour (◀) : reprend exactement la dernière vue visitée
+            if nav_history:
+                nav_forward_stack.append({
+                    "ptr": current_idx_ptr,
+                    "step": current_step,
+                    "style": active_render_style,
+                    "scene": modern_scene
+                })
+                hist_item = nav_history.pop()
+                current_idx_ptr = hist_item["ptr"]
+                forced_style = hist_item.get("style")
+                cached = hist_item.get("scene")
+            else:
+                current_idx_ptr = (current_idx_ptr - 1 + len(indices)) % len(indices)
+                forced_style = None
+            show_toast(u"◀ Précédent", (56, 189, 248))
+
+        if cached is not None and internal_mode == MODE_PHOTOS:
+            modern_scene = cached
+            need_load = False
+        else:
+            need_load = True
+
+        if video_proc:
+            stop_video(video_proc)
+            video_proc = None
+
+        draw_screen_feedback()
+
     def switch_to_internal_mode(new_int_mode, now_ts):
         return (
             new_int_mode,
@@ -1159,10 +1247,10 @@ def run_slideshow(enable_animation=True):
         )
 
     def find_partner_photo(start_ptr, want_vertical=None, exclude_offsets=None):
-        """Cherche une photo suivante compatible dans la liste mélangée."""
+        """Cherche rapidement une photo suivante compatible (scan restreint à 3 max pour réactivité)."""
         if exclude_offsets is None:
             exclude_offsets = set([0])
-        max_scan = min(len(indices) - 1, 16)
+        max_scan = min(len(indices) - 1, 3)
         for offset in range(1, max_scan + 1):
             if offset in exclude_offsets:
                 continue
@@ -1172,7 +1260,7 @@ def run_slideshow(enable_animation=True):
                 cand_img = pygame.image.load(cand_path)
                 cw, ch = cand_img.get_size()
                 is_vert = ch > cw * 1.02
-                if want_vertical is None or is_vert == want_vertical:
+                if want_vertical is None or is_vert == want_vertical or offset == max_scan:
                     return offset, cand_img.convert(), cand_path, get_sidecar_data(cand_path)
             except Exception:
                 pass
@@ -1200,6 +1288,7 @@ def run_slideshow(enable_animation=True):
                 current_step = 1
                 nav_history = []
                 nav_forward_stack = []
+                modern_scene = None
                 need_load = True
                 last_cycle_time = now
                 prev_screen_snapshot = None
@@ -1215,57 +1304,17 @@ def run_slideshow(enable_animation=True):
                     while data:
                         _, _, ev_type, ev_code, ev_value = struct.unpack(event_format, data)
                         if ev_type == EV_KEY and ev_value == 1:
-                            # 1. Mode Apprentissage de bouton actif via le Menu
-                            if now < learning_button_timer:
-                                if ev_code not in top_buttons and ev_code not in front_buttons:
-                                    top_buttons.add(ev_code)
-                                    settings["top_buttons"] = sorted(list(top_buttons))
-                                    save_settings(settings)
-                                    last_learned_code = ev_code
-                                    learning_button_timer = 0.0
-                                    overlay_deadline = now + MENU_DURATION
-                                    show_toast(u"Bouton %d ajouté !" % ev_code, (52, 211, 153))
-                                    data = f.read(event_size)
-                                    continue
-
-                            # 2. Boutons de devant (Façade : Start, Select, Coin...) -> Quitter vers EmulationStation
                             if ev_code in front_buttons:
+                                # Boutons Façade (Start / Select / Coin) -> Quitter
                                 running = False
                                 break
-
-                            # 3. Tous les autres boutons (Panel Arcade du dessus J1/J2)
-                            # Si le bouton n'était pas encore enregistré, on l'assimile à un bouton du dessus
-                            if ev_code not in top_buttons:
-                                top_buttons.add(ev_code)
-                                settings["top_buttons"] = sorted(list(top_buttons))
-                                save_settings(settings)
-
-                            # - Double-clic rapide (< 0.50s) => Ouvre le Menu des Réglages (niveau 2)
-                            # - Simple clic => Si écran propre (0), ouvre Infos + Tooltips (1) ; sinon referme tout (0)
-                            is_double_click = (now - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
-                            last_top_btn_time = now
-
-                            if is_double_click:
-                                last_top_btn_time = 0.0
-                                overlay_level = 2
-                                menu_selected_row = 0
-                                overlay_deadline = now + MENU_DURATION
-                                if video_proc:
-                                    stop_video(video_proc)
-                                    video_proc = None
+                            elif learning_button_timer > now:
+                                last_learned_code = ev_code
+                                show_toast(u"Bouton détecté : %d" % ev_code, (52, 211, 153))
+                                draw_screen_feedback()
                             else:
-                                if overlay_level == 0:
-                                    overlay_level = 1
-                                    overlay_deadline = now + INFO_DURATION
-                                    if video_proc:
-                                        stop_video(video_proc)
-                                        video_proc = None
-                                else:
-                                    was_video = (internal_mode != MODE_PHOTOS)
-                                    overlay_level = 0
-                                    learning_button_timer = 0.0
-                                    if was_video and video_proc is None:
-                                        need_load = True
+                                # Bouton Panel Arcade du dessus -> Infos (1 clic) ou Menu (double clic)
+                                handle_top_button(now)
                         data = f.read(event_size)
                 except Exception:
                     pass
@@ -1278,9 +1327,33 @@ def run_slideshow(enable_animation=True):
             vert_actions = []   # liste de vdir (-1 = Haut ▲, +1 = Bas ▼)
 
             for event in pygame.event.get():
-                if event.type in (pygame.QUIT, pygame.KEYDOWN):
+                if event.type == pygame.QUIT:
                     running = False
                     break
+                elif event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_ESCAPE, pygame.K_q):
+                        running = False
+                        break
+                    elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                        running = False
+                        break
+                    elif learning_button_timer > now:
+                        last_learned_code = event.key
+                        show_toast(u"Touche clavier : %d" % event.key, (52, 211, 153))
+                        draw_screen_feedback()
+                    else:
+                        handle_top_button(now)
+                elif event.type == pygame.JOYBUTTONDOWN:
+                    if event.button in (8, 9, 10, 11):
+                        # Front buttons sur gamepad (Select/Start)
+                        running = False
+                        break
+                    elif learning_button_timer > now:
+                        last_learned_code = 1000 + event.button
+                        show_toast(u"Bouton Pad : #%d" % event.button, (52, 211, 153))
+                        draw_screen_feedback()
+                    else:
+                        handle_top_button(now)
 
                 if event.type == pygame.JOYAXISMOTION:
                     if event.axis == 0:
@@ -1423,59 +1496,47 @@ def run_slideshow(enable_animation=True):
                     if overlay_level == 1:
                         overlay_deadline = now + INFO_DURATION
 
-                    # Détection du double-coup rapide (◀◀ ou ▶▶) en mode Cycle Auto pour passer à la phase suivante/précédente
-                    if current_mode == MODE_CYCLE and is_fresh_tap and last_horiz_tap_dir == steer and (now - last_horiz_tap_time) < DOUBLE_TAP_JOY_THRESHOLD:
-                        last_horiz_tap_dir = 0
-                        last_horiz_tap_time = 0.0
-                        internal_mode = ((internal_mode - 1 + steer) % 3) + 1
-                        all_files = get_files_for_mode(internal_mode)
-                        indices = list(range(len(all_files)))
-                        random.shuffle(indices)
-                        current_idx_ptr = 0
-                        current_step = 1
-                        nav_history = []
-                        nav_forward_stack = []
-                        current_img_raw = None
-                        modern_scene = None
-                        prev_screen_snapshot = None
-                        has_rendered_photo = False
-                        alpha = 0
-                        last_cycle_time = now
-                        need_load = True
-                        if video_proc:
-                            stop_video(video_proc)
-                            video_proc = None
-                        show_toast(u"Cycle Auto ▶ %s" % MODE_NAMES.get(internal_mode, u""), (251, 191, 36))
-                        continue
-
-                    if is_fresh_tap:
-                        last_horiz_tap_dir = steer
-                        last_horiz_tap_time = now
-
-                    if indices:
-                        if steer > 0:
-                            # Avance (▶) : mémorise la position actuelle dans l'historique
-                            nav_history.append(current_idx_ptr)
-                            if len(nav_history) > 60:
-                                nav_history.pop(0)
-                            if nav_forward_stack:
-                                current_idx_ptr = nav_forward_stack.pop()
-                            else:
-                                current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
-                            show_toast(u"Suivant ▶", (56, 189, 248))
+                    if current_mode == MODE_CYCLE and is_fresh_tap:
+                        if cycle_tap_pending == steer and (now - cycle_tap_time) < 0.55:
+                            # DOUBLE-COUP JOYSTICK RAPIDE -> Saut de phase en Cycle Auto (Photos -> Vidéos Perso -> Jeux Rétro)
+                            cycle_tap_pending = 0
+                            cycle_tap_time = 0.0
+                            internal_mode = ((internal_mode - 1 + steer) % 3) + 1
+                            all_files = get_files_for_mode(internal_mode)
+                            indices = list(range(len(all_files)))
+                            random.shuffle(indices)
+                            current_idx_ptr = 0
+                            current_step = 1
+                            nav_history = []
+                            nav_forward_stack = []
+                            modern_scene = None
+                            prev_screen_snapshot = None
+                            has_rendered_photo = False
+                            alpha = 0
+                            last_cycle_time = now
+                            need_load = True
+                            if video_proc:
+                                stop_video(video_proc)
+                                video_proc = None
+                            show_toast(u"Cycle Auto ▶ %s" % MODE_NAMES.get(internal_mode, u""), (251, 191, 36))
+                            draw_screen_feedback()
+                            continue
                         else:
-                            # Retour arrière (◀) : reprend exactement la dernière vue visitée
-                            if nav_history:
-                                nav_forward_stack.append(current_idx_ptr)
-                                current_idx_ptr = nav_history.pop()
-                            else:
-                                current_idx_ptr = (current_idx_ptr - 1 + len(indices)) % len(indices)
-                            show_toast(u"◀ Précédent", (56, 189, 248))
+                            # 1er coup en cycle auto : mémorise et affiche le toast instantanément sans bloquer
+                            cycle_tap_pending = steer
+                            cycle_tap_time = now
+                            show_toast(u"Suivant ▶" if steer > 0 else u"◀ Précédent", (56, 189, 248))
+                            draw_screen_feedback()
+                            continue
+                    else:
+                        trigger_navigation(steer)
 
-                        need_load = True
-                        if video_proc:
-                            stop_video(video_proc)
-                            video_proc = None
+            # Exécution de l'action de navigation si le délai de double-tap est écoulé sans second coup
+            if cycle_tap_pending != 0 and (now - cycle_tap_time) >= 0.30:
+                st = cycle_tap_pending
+                cycle_tap_pending = 0
+                cycle_tap_time = 0.0
+                trigger_navigation(st)
 
             show_info = (overlay_level != 0)
 
@@ -1509,7 +1570,10 @@ def run_slideshow(enable_animation=True):
                 if internal_mode == MODE_PHOTOS:
                     try:
                         # Choix du style de rendu pour cette photo
-                        if photo_style == STYLE_AUTO_ART:
+                        if forced_style is not None:
+                            active_render_style = forced_style
+                            forced_style = None
+                        elif photo_style == STYLE_AUTO_ART:
                             candidates = [s for s in ARTISTIC_POOL if s != last_auto_style]
                             active_render_style = random.choice(candidates) if candidates else STYLE_MODERN
                             last_auto_style = active_render_style
@@ -1542,17 +1606,6 @@ def run_slideshow(enable_animation=True):
 
                             if img2 is not None and img3 is not None:
                                 current_step = 3
-                                p1 = (current_idx_ptr + 1) % len(indices)
-                                p2 = (current_idx_ptr + 2) % len(indices)
-                                c2 = (current_idx_ptr + off2) % len(indices)
-                                c3 = (current_idx_ptr + off3) % len(indices)
-                                if c2 != p1:
-                                    indices[p1], indices[c2] = indices[c2], indices[p1]
-                                    if c3 == p1:
-                                        c3 = c2
-                                if c3 != p2:
-                                    indices[p2], indices[c3] = indices[c3], indices[p2]
-
                                 scene_bg = make_blurred_background(img1, sw, sh, img2, vignette_surf=vignette_surf)
 
                                 mx = int(sw * 0.018)
@@ -1650,9 +1703,6 @@ def run_slideshow(enable_animation=True):
 
                             if img2 is not None:
                                 current_step = 2
-                                next_ptr = (current_idx_ptr + 1) % len(indices)
-                                cand_ptr = (current_idx_ptr + off2) % len(indices)
-                                indices[next_ptr], indices[cand_ptr] = indices[cand_ptr], indices[next_ptr]
 
                                 pol_w = int(sw * 0.46)
                                 pol_h = int(sh * 0.88)
@@ -1745,9 +1795,6 @@ def run_slideshow(enable_animation=True):
                             if img2 is not None:
                                 # Double page Magazine 100% plein écran (Split-Screen 50/50)
                                 current_step = 2
-                                next_ptr = (current_idx_ptr + 1) % len(indices)
-                                cand_ptr = (current_idx_ptr + off2) % len(indices)
-                                indices[next_ptr], indices[cand_ptr] = indices[cand_ptr], indices[next_ptr]
 
                                 half_w = (sw - 4) // 2
                                 c1 = crop_to_aspect(img1, half_w, sh)
@@ -1815,9 +1862,6 @@ def run_slideshow(enable_animation=True):
                             if is_vertical1 and len(indices) > 1 and not force_reload_same and random.random() < DUO_PORTRAIT_PROBABILITY:
                                 off2, duo_img2, duo_path2, meta2 = find_partner_photo(current_idx_ptr, want_vertical=True)
                                 if duo_img2 is not None:
-                                    next_ptr = (current_idx_ptr + 1) % len(indices)
-                                    cand_ptr = (current_idx_ptr + off2) % len(indices)
-                                    indices[next_ptr], indices[cand_ptr] = indices[cand_ptr], indices[next_ptr]
                                     current_step = 2
 
                             bg_tint = (82, 68, 135) if is_arcade else (125, 128, 138)
@@ -2043,8 +2087,13 @@ def run_slideshow(enable_animation=True):
                         need_load = False
 
             if not need_load and not show_info and internal_mode == MODE_PHOTOS and now - last_switch > display_time:
-                nav_history.append(current_idx_ptr)
-                if len(nav_history) > 60:
+                nav_history.append({
+                    "ptr": current_idx_ptr,
+                    "step": current_step,
+                    "style": active_render_style,
+                    "scene": modern_scene
+                })
+                if len(nav_history) > 30:
                     nav_history.pop(0)
                 nav_forward_stack = []
                 current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
@@ -2218,8 +2267,8 @@ def run_slideshow(enable_animation=True):
             elif overlay_level == 2:
                 draw_settings_menu(
                     screen, sw, sh, menu_selected_row, current_mode, internal_mode, photo_style, is_muted, display_time,
-                    top_buttons, learning_button_timer, last_learned_code,
-                    overlay_deadline - now, font_main, font_small, font_regular, font_tiny
+                    overlay_deadline - now, font_main, font_small, font_regular, font_tiny,
+                    learning_button_timer=learning_button_timer, last_learned_code=last_learned_code
                 )
             elif now < toast_State[2] and internal_mode == MODE_PHOTOS:
                 draw_corner_toast(screen, sw, sh, toast_State[0], font_small, accent_color=toast_State[1])
