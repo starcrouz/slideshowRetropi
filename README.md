@@ -118,15 +118,11 @@ A two-script system to turn your Recalbox into a photo frame when idle.
 ### Controls
 | Input | Action |
 |---|---|
-| **Any button** (except Info/Mode/Style) | Exit slideshow |
-| **Any key** | Exit slideshow |
-| **Joystick Left/Right** | Skip to previous/next item |
-| **Joystick Up/Down** | Adjust display speed (photos only) |
-| **Button 1** (ID `289`) in photo mode | Toggle **Info panel** (shows full label, date, source path, active style, countdown) |
-| **Button 1** (ID `289`) in video mode | Toggle **Mute** audio |
-| **Style Button** (ID `291` by default) | Cycle through the **7 photo display styles** (`Mix Auto`, `Ambilight`, `Bento`, `Polaroid`, `Magazine`, `Néon Bartop`, `Classique`) on the fly |
-| **Mode Button** (ID `290` / `304`) | Cycle through display modes (`Photos`, `Vidéos`, `Jeux`, `Cycle Auto`) |
-| *While in Info mode* | Press any button once to see its ID, or **press the same button twice** to assign it as the new **Style Button** |
+| **Any Front Button** (Façade: Start / Select / Coin) | Exit slideshow immediately |
+| **Any Top Button — 1 click** (Panel J1/J2) | Toggle **Media Details & Command Tooltips** (10s auto-close; 1 click again closes) |
+| **Any Top Button — Double-click** (Panel J1/J2) | Open the **Settings Menu** (Mode, Photo Style, Video Sound, Photo Cadence; 12s auto-close) |
+| **Joystick Left / Right (`◀ / ▶`)** | Outside menu: Previous / Next media (`2x` fast tap in `Cycle Auto` skips to next/previous cycle phase) • Inside menu: Change value |
+| **Joystick Up / Down (`▲ / ▼`)** | Outside menu: Change **Photo Style** (when viewing a photo) or toggle **Video Sound** (when playing a video) • Inside menu: Navigate rows |
 
 ### Idle Monitor Configuration
 Edit the constants at the top of [idle_monitor.py](display/idle_monitor.py):

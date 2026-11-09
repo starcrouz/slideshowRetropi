@@ -17,9 +17,11 @@ import re
 import math
 
 # --- CONFIGURATION PAR DÉFAUT ---
-INFO_BUTTON_DEFAULT = 289
-MODE_BUTTON_DEFAULT = 290
-STYLE_BUTTON_DEFAULT = 291
+# Boutons du dessus (Panel Arcade J1/J2 : A, B, X, Y, L1, R1 -> 288..293 et 304..311)
+TOP_BUTTONS_DEFAULT = [288, 289, 290, 291, 292, 293, 304, 305, 306, 307, 308, 309, 310, 311]
+# Boutons de devant (Façade : Start, Select, Coin, Hotkey -> 294..299 et 312..318)
+FRONT_BUTTONS_DEFAULT = [294, 295, 296, 297, 298, 299, 312, 313, 314, 315, 316, 317, 318]
+
 IMAGE_FOLDER = "/recalbox/share/userscripts/slideshow/images"
 VIDEO_PERSO_FOLDER = "/recalbox/share/userscripts/slideshow/videos"
 ROMS_FOLDER = "/recalbox/share/roms"
@@ -28,6 +30,7 @@ SETTINGS_FILE = "/recalbox/share/userscripts/slideshow/slideshow_settings.json"
 DEFAULT_DISPLAY_TIME = 15
 MIN_DISPLAY_TIME = 1
 MAX_DISPLAY_TIME = 120
+DISPLAY_TIME_PRESETS = [5, 8, 10, 12, 15, 20, 30, 45, 60]
 ZOOM_SPEED = 0.00015
 FADE_SPEED = 8
 CROSSFADE_SPEED = 15
@@ -59,6 +62,16 @@ ARTISTIC_POOL = [
     STYLE_ARCADE
 ]
 
+STYLE_SHORT_LABELS = {
+    STYLE_AUTO_ART: u"Mix Artistique (Auto)",
+    STYLE_MODERN: u"Ambilight & Duo",
+    STYLE_BENTO: u"Mosaïque Bento (3 photos)",
+    STYLE_POLAROID: u"Polaroid Vintage",
+    STYLE_MAGAZINE: u"Magazine Plein Écran",
+    STYLE_ARCADE: u"Néon Bartop (Arcade)",
+    STYLE_CLASSIC: u"Classique (Origine)"
+}
+
 STYLE_TITLES = {
     STYLE_AUTO_ART: (u"Style : Mix Artistique (Auto)", u"Varie automatiquement entre tous les styles modernes", (168, 85, 247)),
     STYLE_MODERN: (u"Style : Ambilight & Duo", u"Grand cadre 96% sur fond flouté & Diptyque portraits", (99, 179, 237)),
@@ -79,6 +92,13 @@ MODE_VIDEOS_GAMES = 3
 MODE_CYCLE = 4
 CYCLE_INTERVAL = 60
 
+MODE_NAMES = {
+    MODE_PHOTOS: u"Photos",
+    MODE_VIDEOS_PERSO: u"Vidéos Perso",
+    MODE_VIDEOS_GAMES: u"Jeux (Roms)",
+    MODE_CYCLE: u"Cycle Auto (60s)"
+}
+
 # Input event constants
 EV_KEY = 1
 EV_ABS = 3
@@ -91,12 +111,11 @@ ABS_HAT0Y = 17
 def load_settings():
     defaults = {
         "display_time": DEFAULT_DISPLAY_TIME,
-        "info_button": INFO_BUTTON_DEFAULT,
-        "mode_button": MODE_BUTTON_DEFAULT,
-        "style_button": STYLE_BUTTON_DEFAULT,
-        "current_mode": MODE_PHOTOS,
+        "top_buttons": list(TOP_BUTTONS_DEFAULT),
+        "front_buttons": list(FRONT_BUTTONS_DEFAULT),
+        "current_mode": MODE_CYCLE,
         "photo_style": STYLE_AUTO_ART,
-        "is_muted": False
+        "is_muted": True
     }
     if os.path.exists(SETTINGS_FILE):
         try:
@@ -108,8 +127,10 @@ def load_settings():
             pass
     if defaults.get("photo_style") not in STYLE_ORDER:
         defaults["photo_style"] = STYLE_AUTO_ART
-    if defaults.get("style_button") in (defaults.get("info_button"), defaults.get("mode_button")):
-        defaults["style_button"] = STYLE_BUTTON_DEFAULT
+    if not isinstance(defaults.get("top_buttons"), list) or not defaults.get("top_buttons"):
+        defaults["top_buttons"] = list(TOP_BUTTONS_DEFAULT)
+    if not isinstance(defaults.get("front_buttons"), list) or not defaults.get("front_buttons"):
+        defaults["front_buttons"] = list(FRONT_BUTTONS_DEFAULT)
     return defaults
 
 
@@ -723,12 +744,268 @@ def draw_centered_toast(screen, sw, sh, title_str, subtitle_str, font_main, font
         screen.blit(t1, ((sw - t1.get_width()) // 2, by + (h - t1.get_height()) // 2))
 
 
-def next_photo_style(curr_style):
+def shift_photo_style(curr_style, delta=1):
     try:
         idx = STYLE_ORDER.index(curr_style)
-        return STYLE_ORDER[(idx + 1) % len(STYLE_ORDER)]
+        return STYLE_ORDER[(idx + delta) % len(STYLE_ORDER)]
     except ValueError:
         return STYLE_AUTO_ART
+
+
+def shift_display_time(curr_time, delta=1):
+    best_idx = 0
+    best_diff = 999999
+    for i, val in enumerate(DISPLAY_TIME_PRESETS):
+        diff = abs(curr_time - val)
+        if diff < best_diff:
+            best_diff = diff
+            best_idx = i
+    new_idx = (best_idx + delta) % len(DISPLAY_TIME_PRESETS)
+    return float(DISPLAY_TIME_PRESETS[new_idx])
+
+
+def format_cadence_label(display_time):
+    sec = int(round(display_time))
+    per_min = max(1, int(round(60.0 / max(1.0, display_time))))
+    return u"%ds (%d/min)" % (sec, per_min)
+
+
+def draw_corner_toast(screen, sw, sh, text_str, font_small, accent_color=(56, 189, 248)):
+    if not text_str:
+        return
+    txt = font_small.render(text_str, True, (245, 248, 255))
+    dot_r = 6
+    pad_x = 20
+    pad_y = 12
+    w = txt.get_width() + pad_x * 2 + dot_r * 2 + 10
+    h = txt.get_height() + pad_y * 2
+    box = create_rounded_box(w, h, h // 2, (12, 16, 26), border_color=accent_color, alpha=225, border_width=2)
+    bx = sw - w - 24
+    by = 20
+    screen.blit(box, (bx, by))
+    pygame.draw.circle(screen, accent_color, (bx + pad_x + dot_r, by + h // 2), dot_r)
+    screen.blit(txt, (bx + pad_x + dot_r * 2 + 10, by + (h - txt.get_height()) // 2))
+
+
+def draw_info_overlay(screen, sw, sh, current_mode, internal_mode, photo_style, active_render_style, is_muted,
+                      metas_to_show, video_meta, idx_num, total_count, remain_sec,
+                      font_main, font_small, font_regular, font_tiny):
+    margin_x = int(sw * 0.04)
+    ov_w = sw - 2 * margin_x
+
+    # 1. BANDEAU HAUT : AIDE COMMANDES (TOOLTIPS)
+    top_h = int(sh * 0.165)
+    top_y = int(sh * 0.022)
+    top_box = create_rounded_box(ov_w, top_h, 16, (10, 15, 28), border_color=(34, 211, 238), alpha=232, border_width=2)
+    screen.blit(top_box, (margin_x, top_y))
+
+    hdr_txt = font_small.render(u"AIDE COMMANDES  (1 clic bouton dessus = Fermer)", True, (34, 211, 238))
+    screen.blit(hdr_txt, (margin_x + 22, top_y + 12))
+
+    timer_str = u"Fermeture : %ds" % int(max(0, math.ceil(remain_sec)))
+    timer_txt = font_tiny.render(timer_str, True, (251, 191, 36))
+    t_w = timer_txt.get_width() + 20
+    t_h = timer_txt.get_height() + 8
+    t_box = create_rounded_box(t_w, t_h, 8, (45, 35, 15), border_color=(251, 191, 36), alpha=230, border_width=1)
+    screen.blit(t_box, (margin_x + ov_w - t_w - 18, top_y + 10))
+    screen.blit(timer_txt, (margin_x + ov_w - t_w - 8, top_y + 14))
+
+    sep_y = top_y + 16 + hdr_txt.get_height()
+    pygame.draw.line(screen, (35, 48, 72), (margin_x + 18, sep_y), (margin_x + ov_w - 18, sep_y), 1)
+
+    col1_x = margin_x + 22
+    col2_x = margin_x + ov_w // 2 + 10
+    row1_y = sep_y + 10
+    row2_y = row1_y + font_regular.get_linesize() + 8
+
+    if internal_mode == MODE_PHOTOS:
+        st_short = STYLE_SHORT_LABELS.get(photo_style, photo_style)
+        updown_str = u"▲ / ▼ Manette : Style (%s)" % st_short
+    else:
+        snd_short = u"Coupé" if is_muted else u"Actif"
+        updown_str = u"▲ / ▼ Manette : Son vidéo (%s)" % snd_short
+
+    screen.blit(font_regular.render(u"◀ / ▶ Manette : Média précédent / suivant", True, (235, 240, 250)), (col1_x, row1_y))
+    screen.blit(font_regular.render(updown_str, True, (235, 240, 250)), (col2_x, row1_y))
+    screen.blit(font_regular.render(u"2x ◀ / ▶ rapide : Changer phase (en Cycle Auto)", True, (190, 205, 225)), (col1_x, row2_y))
+    screen.blit(font_regular.render(u"Double-clic Bouton dessus : Ouvrir Menu Réglages", True, (129, 140, 248)), (col2_x, row2_y))
+
+    # 2. BANDEAU BAS : DÉTAILS DU MÉDIA AFFICHÉ
+    if internal_mode == MODE_PHOTOS:
+        items = metas_to_show[:3] if metas_to_show else [{}]
+        bot_h = min(int(sh * 0.36), int(sh * 0.085) + len(items) * (font_small.get_linesize() + font_tiny.get_linesize() + 14))
+    else:
+        bot_h = int(sh * 0.175)
+
+    bot_y = sh - bot_h - int(sh * 0.022)
+    bot_box = create_rounded_box(ov_w, bot_h, 16, (10, 15, 28), border_color=(52, 211, 153), alpha=234, border_width=2)
+    screen.blit(bot_box, (margin_x, bot_y))
+
+    if current_mode == MODE_CYCLE:
+        mode_badge_str = u"Mode : Cycle Auto (%s)" % MODE_NAMES.get(internal_mode, u"")
+    else:
+        mode_badge_str = u"Mode : %s" % MODE_NAMES.get(current_mode, u"")
+
+    if internal_mode == MODE_PHOTOS:
+        nb_shown = len(metas_to_show) if metas_to_show else 1
+        st_disp = STYLE_SHORT_LABELS.get(active_render_style, active_render_style)
+        if nb_shown > 1:
+            det_hdr = u"DÉTAILS DES %d PHOTOS AFFICHÉES  [#%d/%d]  •  %s" % (nb_shown, idx_num, total_count, st_disp)
+        else:
+            det_hdr = u"DÉTAILS DE LA PHOTO  [#%d/%d]  •  %s" % (idx_num, total_count, st_disp)
+    elif internal_mode == MODE_VIDEOS_PERSO:
+        det_hdr = u"DÉTAILS DE LA VIDÉO PERSO  [#%d/%d]" % (idx_num, total_count)
+    else:
+        det_hdr = u"DÉTAILS DU JEU RÉTRO  [#%d/%d]" % (idx_num, total_count)
+
+    screen.blit(font_small.render(det_hdr, True, (52, 211, 153)), (margin_x + 22, bot_y + 12))
+    mb_txt = font_tiny.render(mode_badge_str, True, (180, 195, 215))
+    screen.blit(mb_txt, (margin_x + ov_w - mb_txt.get_width() - 20, bot_y + 15))
+
+    sep2_y = bot_y + 16 + font_small.get_height()
+    pygame.draw.line(screen, (35, 48, 72), (margin_x + 18, sep2_y), (margin_x + ov_w - 18, sep2_y), 1)
+
+    cur_y = sep2_y + 10
+    if internal_mode == MODE_PHOTOS:
+        items = metas_to_show[:3] if metas_to_show else [{}]
+        for idx_m, m_item in enumerate(items):
+            prefix = (u"%d. " % (idx_m + 1)) if len(items) > 1 else u""
+            label_raw = m_item.get("label", u"Sans titre") or u"Sans titre"
+            clean_label = label_raw.split(u" - ")[0]
+            precise_date = m_item.get("info", u"")
+            line1 = u"%s%s  (%s)" % (prefix, clean_label, precise_date) if precise_date else u"%s%s" % (prefix, clean_label)
+            screen.blit(font_small.render(line1, True, (255, 255, 255)), (margin_x + 22, cur_y))
+            cur_y += font_small.get_linesize() + 1
+
+            src_p = m_item.get("source_path", u"")
+            path_rect = pygame.Rect(margin_x + 22, cur_y, ov_w - 44, font_tiny.get_linesize() + 4)
+            draw_wrapped_text(screen, src_p, font_tiny, (165, 178, 200), path_rect)
+            cur_y += font_tiny.get_linesize() + 7
+    elif internal_mode == MODE_VIDEOS_PERSO:
+        lbl = video_meta.get("label", u"Vidéo Perso") or u"Vidéo Perso"
+        inf = video_meta.get("info", u"")
+        line1 = u"%s  (Durée : %s)" % (lbl, inf) if inf else lbl
+        screen.blit(font_small.render(line1, True, (255, 255, 255)), (margin_x + 22, cur_y))
+        cur_y += font_small.get_linesize() + 4
+        path_rect = pygame.Rect(margin_x + 22, cur_y, ov_w - 44, font_tiny.get_linesize() + 4)
+        draw_wrapped_text(screen, video_meta.get("source_path", u""), font_tiny, (165, 178, 200), path_rect)
+    else:
+        g_title = video_meta.get("game", u"Jeu Rétro")
+        g_cons = video_meta.get("console", u"")
+        line1 = u"%s  —  Console : %s" % (g_title, g_cons)
+        screen.blit(font_small.render(line1, True, (251, 191, 36)), (margin_x + 22, cur_y))
+        cur_y += font_small.get_linesize() + 4
+        path_rect = pygame.Rect(margin_x + 22, cur_y, ov_w - 44, font_tiny.get_linesize() + 4)
+        draw_wrapped_text(screen, video_meta.get("source_path", u""), font_tiny, (165, 178, 200), path_rect)
+
+
+def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode, photo_style, is_muted, display_time,
+                       remain_sec, font_main, font_small, font_regular, font_tiny):
+    mw = int(sw * 0.78)
+    mh = int(sh * 0.62)
+    mx = (sw - mw) // 2
+    my = (sh - mh) // 2
+
+    box = create_rounded_box(mw, mh, 20, (10, 14, 26), border_color=(99, 102, 241), alpha=242, border_width=3)
+    screen.blit(box, (mx, my))
+
+    # En-tête du menu
+    title_txt = font_small.render(u"MENU RÉGLAGES  (▲/▼ : Choisir  •  ◀/▶ : Modifier)", True, (165, 180, 252))
+    screen.blit(title_txt, (mx + 28, my + 20))
+
+    timer_str = u"Fermeture : %ds" % int(max(0, math.ceil(remain_sec)))
+    timer_txt = font_tiny.render(timer_str, True, (251, 191, 36))
+    tw = timer_txt.get_width() + 22
+    th = timer_txt.get_height() + 10
+    tbox = create_rounded_box(tw, th, 8, (45, 35, 15), border_color=(251, 191, 36), alpha=235, border_width=1)
+    screen.blit(tbox, (mx + mw - tw - 24, my + 16))
+    screen.blit(timer_txt, (mx + mw - tw - 13, my + 21))
+
+    sep_top = my + 26 + title_txt.get_height()
+    pygame.draw.line(screen, (38, 48, 74), (mx + 24, sep_top), (mx + mw - 24, sep_top), 1)
+
+    if current_mode == MODE_CYCLE:
+        mode_val = u"◀ Cycle Auto (%s) ▶" % MODE_NAMES.get(internal_mode, u"Photos")
+    else:
+        mode_val = u"◀ %s ▶" % MODE_NAMES.get(current_mode, u"Photos")
+
+    style_val = u"◀ %s ▶" % STYLE_SHORT_LABELS.get(photo_style, photo_style)
+    sound_val = u"◀ Coupé (Muet) ▶" if is_muted else u"◀ Actif (Son) ▶"
+    speed_val = u"◀ %s ▶" % format_cadence_label(display_time)
+    close_val = u"↩ Reprendre (◀ / ▶)"
+
+    rows = [
+        (u"Mode d'affichage", u"2x ◀/▶ en Cycle", mode_val, False),
+        (u"Style des photos", u"▲/▼ sur photo", style_val, False),
+        (u"Son des vidéos", u"▲/▼ sur vidéo", sound_val, False),
+        (u"Cadence des photos", None, speed_val, False),
+        (u"Fermer le menu", u"ou 1 clic bouton", close_val, True)
+    ]
+
+    area_top = sep_top + 16
+    area_bot = my + mh - 56
+    row_h = int((area_bot - area_top - 4 * 10) // len(rows))
+    row_w = mw - 56
+
+    for idx, (lbl, badge_str, val_str, is_close) in enumerate(rows):
+        ry = area_top + idx * (row_h + 10)
+        rx = mx + 28
+        active = (idx == selected_row)
+
+        if active:
+            bg_col = (18, 65, 52) if is_close else (38, 46, 108)
+            bd_col = (52, 211, 153) if is_close else (129, 140, 248)
+            rbox = create_rounded_box(row_w, row_h, 12, bg_col, border_color=bd_col, alpha=235, border_width=2)
+            screen.blit(rbox, (rx, ry))
+            prefix = u"▸ "
+            lbl_col = (255, 255, 255)
+            val_col = (110, 231, 183) if is_close else (251, 191, 36)
+        else:
+            rbox = create_rounded_box(row_w, row_h, 12, (17, 23, 39), border_color=(32, 42, 64), alpha=190, border_width=1)
+            screen.blit(rbox, (rx, ry))
+            prefix = u"   "
+            lbl_col = (205, 214, 230)
+            val_col = (148, 163, 184)
+
+        lbl_surf = font_small.render(prefix + lbl, True, lbl_col)
+        ly = ry + (row_h - lbl_surf.get_height()) // 2
+        screen.blit(lbl_surf, (rx + 16, ly))
+
+        if badge_str:
+            b_surf = font_tiny.render(badge_str, True, (34, 211, 238))
+            bw = b_surf.get_width() + 16
+            bh = b_surf.get_height() + 6
+            bx = rx + 26 + lbl_surf.get_width()
+            by = ry + (row_h - bh) // 2
+            bbox = create_rounded_box(bw, bh, 6, (15, 30, 50), border_color=(34, 211, 238), alpha=215, border_width=1)
+            screen.blit(bbox, (bx, by))
+            screen.blit(b_surf, (bx + 8, by + 3))
+
+        val_surf = font_small.render(val_str, True, val_col)
+        vy = ry + (row_h - val_surf.get_height()) // 2
+        screen.blit(val_surf, (rx + row_w - val_surf.get_width() - 18, vy))
+
+    # Pied du menu
+    pygame.draw.line(screen, (38, 48, 74), (mx + 24, my + mh - 44), (mx + mw - 24, my + mh - 44), 1)
+    foot_left = font_tiny.render(u"Manette ▲/▼ : Naviguer   |   ◀/▶ : Modifier la valeur", True, (160, 174, 198))
+    foot_right = font_tiny.render(u"1 clic bouton dessus : Fermer", True, (165, 180, 252))
+    screen.blit(foot_left, (mx + 28, my + mh - 32))
+    screen.blit(foot_right, (mx + mw - foot_right.get_width() - 28, my + mh - 32))
+
+
+def draw_video_backdrop(screen, sw, sh, internal_mode, video_meta, is_muted, font_main, font_small, font_regular):
+    screen.fill((10, 14, 24))
+    if internal_mode == MODE_VIDEOS_GAMES:
+        title = video_meta.get("game", u"Jeu Rétro")
+        sub = u"Console : %s" % video_meta.get("console", u"")
+        accent = (251, 191, 36)
+    else:
+        title = video_meta.get("label", u"Vidéo Perso") or u"Vidéo Perso"
+        info = video_meta.get("info", u"")
+        sub = (u"Durée : %s" % info) if info else u"Vidéo personnelle"
+        accent = (56, 189, 248)
+    snd_str = u"Son : Coupé (Muet)" if is_muted else u"Son : Actif"
+    draw_centered_toast(screen, sw, sh, title, u"%s   •   %s" % (sub, snd_str), font_main, font_regular, accent_color=accent, y_center=sh // 2)
 
 
 def run_slideshow(enable_animation=True):
@@ -736,13 +1013,12 @@ def run_slideshow(enable_animation=True):
     os.environ["SDL_NOMOUSE"] = "1"
 
     settings = load_settings()
-    display_time = settings.get("display_time", DEFAULT_DISPLAY_TIME)
-    info_button_code = settings.get("info_button", INFO_BUTTON_DEFAULT)
-    mode_button_code = settings.get("mode_button", MODE_BUTTON_DEFAULT)
-    style_button_code = settings.get("style_button", STYLE_BUTTON_DEFAULT)
-    current_mode = settings.get("current_mode", MODE_PHOTOS)
+    display_time = float(settings.get("display_time", DEFAULT_DISPLAY_TIME))
+    top_buttons = set(settings.get("top_buttons", TOP_BUTTONS_DEFAULT))
+    front_buttons = set(settings.get("front_buttons", FRONT_BUTTONS_DEFAULT))
+    current_mode = settings.get("current_mode", MODE_CYCLE)
     photo_style = settings.get("photo_style", STYLE_AUTO_ART)
-    is_muted = settings.get("is_muted", False)
+    is_muted = settings.get("is_muted", True)
 
     internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
     last_cycle_time = time.time()
@@ -778,7 +1054,7 @@ def run_slideshow(enable_animation=True):
     font_editorial = load_best_font(int(sh * 0.048), bold=True)
     font_main = load_best_font(int(sh * 0.040), bold=True)
     font_small = load_best_font(int(sh * 0.025), bold=True)
-    font_regular = load_best_font(int(sh * 0.023), bold=False)
+    font_regular = load_best_font(int(sh * 0.022), bold=False)
     font_tiny = load_best_font(int(sh * 0.018), bold=False)
 
     # Police classique d'origine
@@ -826,6 +1102,7 @@ def run_slideshow(enable_animation=True):
     zoom_factor = 1.0
     alpha = 0
     meta_data = {}
+    video_meta = {}
     anim_type = "zoom_in"
     scroll_dir = "down"
 
@@ -837,26 +1114,52 @@ def run_slideshow(enable_animation=True):
     has_rendered_photo = False
     prev_polaroid_ghost = None
 
-    show_info = False
-    info_timer = 0
-    INFO_DURATION = 15
-    last_detected_code = 0
-    last_detected_count = 0
-    code_timer = 0
-    style_bound_msg_timer = 0
+    # Niveau d'overlay : 0 = Écran propre | 1 = Infos Média + Tooltips | 2 = Menu Réglages
+    overlay_level = 0
+    overlay_deadline = 0.0
+    INFO_DURATION = 10.0
+    MENU_DURATION = 12.0
+    menu_selected_row = 0
+    MENU_ROW_COUNT = 5
 
-    speed_overlay_timer = 0
-    mode_overlay_timer = 0
-    mute_overlay_timer = 0
-    style_overlay_timer = 0
-    OVERLAY_DURATION = 2.6
+    # Toast éphémère en haut à droite (lors d'une action directe au joystick hors menu)
+    toast_text = u""
+    toast_color = (56, 189, 248)
+    toast_timer = 0.0
+    TOAST_DURATION = 1.6
 
-    last_nav_time = 0
-    last_speed_time = 0
+    # Détection double-clic boutons du dessus & double-coup joystick gauche/droite
+    last_top_btn_time = 0.0
+    DOUBLE_CLICK_BTN_THRESHOLD = 0.45
+
+    last_horiz_tap_dir = 0
+    last_horiz_tap_time = 0.0
+    DOUBLE_TAP_JOY_THRESHOLD = 0.60
+
+    joy_axis_x_neutral = True
+    joy_axis_y_neutral = True
+    joy_hat_x_neutral = True
+    joy_hat_y_neutral = True
+    last_horiz_action_time = 0.0
+    last_vert_action_time = 0.0
+
     video_proc = None
     video_start_time = 0
     VIDEO_MAX_PLAY_SECONDS = 210
     devnull_f = open(os.devnull, 'wb')
+
+    def show_toast(msg, color=(56, 189, 248)):
+        toast_State[0] = msg
+        toast_State[1] = color
+        toast_State[2] = time.time() + TOAST_DURATION
+
+    toast_State = [u"", (56, 189, 248), 0.0]
+
+    def switch_to_internal_mode(new_int_mode, now_ts):
+        return (
+            new_int_mode,
+            get_files_for_mode(new_int_mode)
+        )
 
     def find_partner_photo(start_ptr, want_vertical=None, exclude_offsets=None):
         """Cherche une photo suivante compatible dans la liste mélangée."""
@@ -881,9 +1184,17 @@ def run_slideshow(enable_animation=True):
     try:
         while running:
             now = time.time()
+            show_info = (overlay_level != 0)
 
             # --- 1. LOGIQUE TIMERS & CYCLE ---
-            if current_mode == MODE_CYCLE and now - last_cycle_time > CYCLE_INTERVAL:
+            if overlay_level != 0 and now > overlay_deadline:
+                was_video = (internal_mode != MODE_PHOTOS)
+                overlay_level = 0
+                show_info = False
+                if was_video and video_proc is None:
+                    need_load = True
+
+            if current_mode == MODE_CYCLE and overlay_level == 0 and now - last_cycle_time > CYCLE_INTERVAL:
                 internal_mode = (internal_mode % 3) + 1
                 all_files = get_files_for_mode(internal_mode)
                 indices = list(range(len(all_files)))
@@ -898,95 +1209,44 @@ def run_slideshow(enable_animation=True):
                     stop_video(video_proc)
                     video_proc = None
 
-            if show_info and now > info_timer:
-                show_info = False
-
-            # --- 2. ENTRÉES ---
+            # --- 2. ENTRÉES BOUTONS (/dev/input/event*) ---
             for f in input_files:
                 try:
                     data = f.read(event_size)
                     while data:
                         _, _, ev_type, ev_code, ev_value = struct.unpack(event_format, data)
                         if ev_type == EV_KEY and ev_value == 1:
-                            if show_info:
-                                if ev_code == info_button_code:
-                                    show_info = False
-                                elif ev_code == style_button_code or ev_code == mode_button_code:
-                                    photo_style = next_photo_style(photo_style)
-                                    settings["photo_style"] = photo_style
-                                    save_settings(settings)
-                                    style_overlay_timer = now + OVERLAY_DURATION
-                                    info_timer = now + INFO_DURATION
-                                    need_load = True
-                                    force_reload_same = True
-                                else:
-                                    if ev_code == last_detected_code and now < code_timer:
-                                        last_detected_count += 1
-                                    else:
-                                        last_detected_code = ev_code
-                                        last_detected_count = 1
-                                    code_timer = now + 4
-                                    info_timer = now + INFO_DURATION
+                            # Boutons de devant (Façade) ou bouton inconnu => Quitter immédiatement l'économiseur
+                            if ev_code in front_buttons or ev_code not in top_buttons:
+                                running = False
+                                break
 
-                                    if last_detected_count >= 2:
-                                        style_button_code = ev_code
-                                        settings["style_button"] = style_button_code
-                                        photo_style = next_photo_style(photo_style)
-                                        settings["photo_style"] = photo_style
-                                        save_settings(settings)
-                                        style_bound_msg_timer = now + 4
-                                        style_overlay_timer = now + OVERLAY_DURATION
-                                        last_detected_count = 0
-                                        need_load = True
-                                        force_reload_same = True
+                            # Boutons du dessus (Panel Arcade J1/J2) :
+                            # - Double-clic rapide (< 0.45s) => Ouvre le Menu des Réglages (niveau 2)
+                            # - Simple clic => Si écran propre (0), ouvre Infos + Tooltips (1) ; sinon referme tout (0)
+                            is_double_click = (now - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
+                            last_top_btn_time = now
+
+                            if is_double_click:
+                                last_top_btn_time = 0.0
+                                overlay_level = 2
+                                menu_selected_row = 0
+                                overlay_deadline = now + MENU_DURATION
+                                if video_proc:
+                                    stop_video(video_proc)
+                                    video_proc = None
                             else:
-                                if ev_code == info_button_code:
-                                    if internal_mode == MODE_PHOTOS:
-                                        show_info = True
-                                        info_timer = now + INFO_DURATION
-                                    else:
-                                        is_muted = not is_muted
-                                        mute_overlay_timer = now + OVERLAY_DURATION
-                                        settings["is_muted"] = is_muted
-                                        save_settings(settings)
-                                        if video_proc:
-                                            stop_video(video_proc)
-                                            video_proc = None
-                                            need_load = True
-                                elif ev_code == style_button_code and internal_mode == MODE_PHOTOS:
-                                    photo_style = next_photo_style(photo_style)
-                                    settings["photo_style"] = photo_style
-                                    save_settings(settings)
-                                    style_overlay_timer = now + OVERLAY_DURATION
-                                    need_load = True
-                                    force_reload_same = True
-                                elif ev_code == mode_button_code:
-                                    current_mode = (current_mode % 4) + 1
-                                    internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
-                                    all_files = get_files_for_mode(internal_mode)
-                                    indices = list(range(len(all_files)))
-                                    random.shuffle(indices)
-                                    current_idx_ptr = 0
-                                    current_step = 1
-
-                                    screen.fill((0, 0, 0))
-                                    current_img_raw = None
-                                    modern_scene = None
-                                    prev_screen_snapshot = None
-                                    has_rendered_photo = False
-                                    alpha = 0
-
-                                    mode_overlay_timer = now + OVERLAY_DURATION
-                                    settings["current_mode"] = current_mode
-                                    save_settings(settings)
-                                    last_cycle_time = now
-                                    need_load = True
+                                if overlay_level == 0:
+                                    overlay_level = 1
+                                    overlay_deadline = now + INFO_DURATION
                                     if video_proc:
                                         stop_video(video_proc)
                                         video_proc = None
                                 else:
-                                    running = False
-                                    break
+                                    was_video = (internal_mode != MODE_PHOTOS)
+                                    overlay_level = 0
+                                    if was_video and video_proc is None:
+                                        need_load = True
                         data = f.read(event_size)
                 except Exception:
                     pass
@@ -994,46 +1254,176 @@ def run_slideshow(enable_animation=True):
             if not running:
                 break
 
-            # --- 3. ÉVÉNEMENTS SDL ---
+            # --- 3. ÉVÉNEMENTS SDL & MANETTES (JOYSTICKS) ---
+            horiz_actions = []  # liste de tuples (steer, is_fresh_tap)
+            vert_actions = []   # liste de vdir (-1 = Haut ▲, +1 = Bas ▼)
+
             for event in pygame.event.get():
                 if event.type in (pygame.QUIT, pygame.KEYDOWN):
                     running = False
+                    break
 
-                if not show_info:
-                    if internal_mode == MODE_PHOTOS and now - last_speed_time > 0.2:
-                        change = 0
-                        if event.type == pygame.JOYAXISMOTION and event.axis == 1:
-                            if event.value < -0.6:
-                                change = 1
-                            elif event.value > 0.6:
-                                change = -1
-                        elif event.type == pygame.JOYHATMOTION and event.value[1] != 0:
-                            change = event.value[1]
+                if event.type == pygame.JOYAXISMOTION:
+                    if event.axis == 0:
+                        if abs(event.value) < 0.35:
+                            joy_axis_x_neutral = True
+                        elif abs(event.value) > 0.6:
+                            if joy_axis_x_neutral or (now - last_horiz_action_time > 0.42):
+                                steer = 1 if event.value > 0 else -1
+                                horiz_actions.append((steer, joy_axis_x_neutral))
+                                joy_axis_x_neutral = False
+                                last_horiz_action_time = now
+                    elif event.axis == 1:
+                        if abs(event.value) < 0.35:
+                            joy_axis_y_neutral = True
+                        elif abs(event.value) > 0.6:
+                            if joy_axis_y_neutral or (now - last_vert_action_time > 0.35):
+                                vdir = -1 if event.value < 0 else 1
+                                vert_actions.append(vdir)
+                                joy_axis_y_neutral = False
+                                last_vert_action_time = now
 
-                        if change != 0:
-                            img_per_min = int(round(60.0 / display_time)) + change
-                            img_per_min = max(1, min(60, img_per_min))
-                            display_time = 60.0 / img_per_min
-                            last_speed_time = now
-                            speed_overlay_timer = now + OVERLAY_DURATION
-                            settings["display_time"] = display_time
-                            save_settings(settings)
+                elif event.type == pygame.JOYHATMOTION:
+                    hx, hy = event.value
+                    if hx == 0:
+                        joy_hat_x_neutral = True
+                    elif joy_hat_x_neutral:
+                        horiz_actions.append((1 if hx > 0 else -1, True))
+                        joy_hat_x_neutral = False
+                        last_horiz_action_time = now
 
-                    if now - last_nav_time > 0.4 and indices:
-                        steer = 0
-                        if event.type == pygame.JOYAXISMOTION and event.axis == 0:
-                            if abs(event.value) > 0.6:
-                                steer = 1 if event.value > 0.6 else -1
-                        elif event.type == pygame.JOYHATMOTION and event.value[0] != 0:
-                            steer = event.value[0]
-                        if steer != 0:
-                            step = current_step if steer > 0 else 1
-                            current_idx_ptr = (current_idx_ptr + steer * step) % len(indices)
+                    if hy == 0:
+                        joy_hat_y_neutral = True
+                    elif joy_hat_y_neutral:
+                        vert_actions.append(-1 if hy > 0 else 1)
+                        joy_hat_y_neutral = False
+                        last_vert_action_time = now
+
+            if not running:
+                break
+
+            # Traitement des actions verticales (Haut ▲ / Bas ▼)
+            for vdir in vert_actions:
+                if overlay_level == 2:
+                    # Navigation dans le Menu Réglages
+                    overlay_deadline = now + MENU_DURATION
+                    menu_selected_row = (menu_selected_row + vdir + MENU_ROW_COUNT) % MENU_ROW_COUNT
+                else:
+                    # Hors menu (écran propre 0 ou Infos 1) : Raccourci direct Style (sur photo) ou Son (sur vidéo)
+                    if overlay_level == 1:
+                        overlay_deadline = now + INFO_DURATION
+                    if internal_mode == MODE_PHOTOS:
+                        photo_style = shift_photo_style(photo_style, vdir)
+                        settings["photo_style"] = photo_style
+                        save_settings(settings)
+                        st_lbl, _, st_col = STYLE_TITLES.get(photo_style, (u"Style", u"", (99, 179, 237)))
+                        show_toast(st_lbl, st_col)
+                        need_load = True
+                        force_reload_same = True
+                    else:
+                        is_muted = not is_muted
+                        settings["is_muted"] = is_muted
+                        save_settings(settings)
+                        show_toast(
+                            u"Son vidéo : Coupé (Muet)" if is_muted else u"Son vidéo : Actif",
+                            (248, 113, 113) if is_muted else (52, 211, 153)
+                        )
+                        if video_proc:
+                            stop_video(video_proc)
+                            video_proc = None
                             need_load = True
-                            last_nav_time = now
-                            if video_proc:
-                                stop_video(video_proc)
-                                video_proc = None
+
+            # Traitement des actions horizontales (Gauche ◀ / Droite ▶)
+            for steer, is_fresh_tap in horiz_actions:
+                if overlay_level == 2:
+                    # Modification de l'option sélectionnée dans le Menu Réglages
+                    overlay_deadline = now + MENU_DURATION
+                    if menu_selected_row == 0:
+                        # Mode d'affichage (1..4)
+                        current_mode = ((current_mode - 1 + steer) % 4) + 1
+                        internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
+                        all_files = get_files_for_mode(internal_mode)
+                        indices = list(range(len(all_files)))
+                        random.shuffle(indices)
+                        current_idx_ptr = 0
+                        current_step = 1
+                        current_img_raw = None
+                        modern_scene = None
+                        prev_screen_snapshot = None
+                        has_rendered_photo = False
+                        alpha = 0
+                        settings["current_mode"] = current_mode
+                        save_settings(settings)
+                        last_cycle_time = now
+                        need_load = True
+                        if video_proc:
+                            stop_video(video_proc)
+                            video_proc = None
+                    elif menu_selected_row == 1:
+                        # Style des photos
+                        photo_style = shift_photo_style(photo_style, steer)
+                        settings["photo_style"] = photo_style
+                        save_settings(settings)
+                        if internal_mode == MODE_PHOTOS:
+                            need_load = True
+                            force_reload_same = True
+                    elif menu_selected_row == 2:
+                        # Son des vidéos
+                        is_muted = not is_muted
+                        settings["is_muted"] = is_muted
+                        save_settings(settings)
+                    elif menu_selected_row == 3:
+                        # Cadence des photos
+                        display_time = shift_display_time(display_time, steer)
+                        settings["display_time"] = display_time
+                        save_settings(settings)
+                    elif menu_selected_row == 4:
+                        # Fermer le menu
+                        was_video = (internal_mode != MODE_PHOTOS)
+                        overlay_level = 0
+                        if was_video and video_proc is None:
+                            need_load = True
+                else:
+                    # Hors menu (écran propre 0 ou Infos 1)
+                    if overlay_level == 1:
+                        overlay_deadline = now + INFO_DURATION
+
+                    # Détection du double-coup rapide (◀◀ ou ▶▶) en mode Cycle Auto pour passer à la phase suivante/précédente
+                    if current_mode == MODE_CYCLE and is_fresh_tap and last_horiz_tap_dir == steer and (now - last_horiz_tap_time) < DOUBLE_TAP_JOY_THRESHOLD:
+                        last_horiz_tap_dir = 0
+                        last_horiz_tap_time = 0.0
+                        internal_mode = ((internal_mode - 1 + steer) % 3) + 1
+                        all_files = get_files_for_mode(internal_mode)
+                        indices = list(range(len(all_files)))
+                        random.shuffle(indices)
+                        current_idx_ptr = 0
+                        current_step = 1
+                        current_img_raw = None
+                        modern_scene = None
+                        prev_screen_snapshot = None
+                        has_rendered_photo = False
+                        alpha = 0
+                        last_cycle_time = now
+                        need_load = True
+                        if video_proc:
+                            stop_video(video_proc)
+                            video_proc = None
+                        show_toast(u"Cycle Auto ▶ %s" % MODE_NAMES.get(internal_mode, u""), (251, 191, 36))
+                        continue
+
+                    if is_fresh_tap:
+                        last_horiz_tap_dir = steer
+                        last_horiz_tap_time = now
+
+                    if indices:
+                        step = current_step if steer > 0 else 1
+                        current_idx_ptr = (current_idx_ptr + steer * step) % len(indices)
+                        need_load = True
+                        if video_proc:
+                            stop_video(video_proc)
+                            video_proc = None
+
+            show_info = (overlay_level != 0)
 
             # --- 4. LOGIQUE CHARGEMENT ---
             if video_proc:
@@ -1049,9 +1439,7 @@ def run_slideshow(enable_animation=True):
                         current_idx_ptr = (current_idx_ptr + 1) % len(indices)
                     need_load = True
 
-            if need_load and now < mode_overlay_timer:
-                pass
-            elif need_load:
+            if need_load:
                 if not indices:
                     screen.fill((0, 0, 0))
                     msg = u"Aucun fichier trouvé"
@@ -1536,6 +1924,11 @@ def run_slideshow(enable_animation=True):
                     margin_h = 60
                     if internal_mode == MODE_VIDEOS_GAMES:
                         vm = parse_game_metadata(file_path)
+                        video_meta = {
+                            "game": vm["game"],
+                            "console": vm["console"],
+                            "source_path": file_path
+                        }
                         write_current_state({
                             "type": "video_game",
                             "filename": os.path.basename(file_path),
@@ -1554,7 +1947,12 @@ def run_slideshow(enable_animation=True):
                         screen.blit(t2, (20, sh - 45))
                     else:
                         vm = get_sidecar_data(file_path)
-                        label = vm.get("label", u"Vidéo Perso")
+                        label = vm.get("label", u"Vidéo Perso") or u"Vidéo Perso"
+                        video_meta = {
+                            "label": label,
+                            "info": vm.get("info", u""),
+                            "source_path": vm.get("source_path", u"") or file_path
+                        }
                         write_current_state({
                             "type": "video_perso",
                             "filename": os.path.basename(file_path),
@@ -1572,19 +1970,23 @@ def run_slideshow(enable_animation=True):
                             sh2 = font_tiny.render(u"Durée : %s" % vm["info"], True, (0, 0, 0))
                             screen.blit(sh2, (22, sh - 43))
                             screen.blit(t2, (20, sh - 45))
-                    pygame.display.flip()
-                    cmd = ["omxplayer", "-o", "both", "--no-osd", "--aspect-mode", "letterbox", "--win", "0,0,%d,%d" % (sw, sh - margin_h)]
-                    if is_muted:
-                        cmd += ["--vol", "-6000"]
-                    cmd.append(file_path)
-                    try:
-                        video_proc = subprocess.Popen(cmd, stdout=devnull_f, stderr=devnull_f, preexec_fn=os.setsid)
-                        video_start_time = now
+
+                    if overlay_level == 0:
+                        pygame.display.flip()
+                        cmd = ["omxplayer", "-o", "both", "--no-osd", "--aspect-mode", "letterbox", "--win", "0,0,%d,%d" % (sw, sh - margin_h)]
+                        if is_muted:
+                            cmd += ["--vol", "-6000"]
+                        cmd.append(file_path)
+                        try:
+                            video_proc = subprocess.Popen(cmd, stdout=devnull_f, stderr=devnull_f, preexec_fn=os.setsid)
+                            video_start_time = now
+                            need_load = False
+                        except Exception:
+                            video_proc = None
+                            current_idx_ptr = (current_idx_ptr + 1) % len(indices)
+                            need_load = True
+                    else:
                         need_load = False
-                    except Exception:
-                        video_proc = None
-                        current_idx_ptr = (current_idx_ptr + 1) % len(indices)
-                        need_load = True
 
             if not need_load and not show_info and internal_mode == MODE_PHOTOS and now - last_switch > display_time:
                 current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
@@ -1721,69 +2123,47 @@ def run_slideshow(enable_animation=True):
 
                     has_rendered_photo = True
 
-                # --- PANNEAU INFO & OVERLAYS ---
-                if show_info:
-                    metas_to_show = modern_scene["metas"] if (active_render_style != STYLE_CLASSIC and modern_scene) else [meta_data]
-                    ov_w = int(sw * 0.80)
-                    ov_h = min(int(sh * 0.42), int(sh * (0.11 + 0.08 * len(metas_to_show))))
-                    ox, oy = (sw - ov_w) // 2, sh - ov_h - int(sh * 0.06)
-
-                    info_box = create_rounded_box(ov_w, ov_h, 16, (14, 17, 26), border_color=(99, 102, 241), alpha=232, border_width=2)
-                    screen.blit(info_box, (ox, oy))
-
-                    cur_y = oy + 12
-                    for idx_m, m_item in enumerate(metas_to_show[:3]):
-                        prefix = (u"[%d] " % (idx_m + 1)) if len(metas_to_show) > 1 else u""
-                        label_raw = m_item.get("label", u"Sans titre") or u"Sans titre"
-                        clean_label = label_raw.split(u" - ")[0]
-                        precise_date = m_item.get("info", u"")
-                        line1 = u"%s%s  (%s)" % (prefix, clean_label, precise_date)
-                        screen.blit(font_small.render(line1, True, (255, 255, 255)), (ox + 18, cur_y))
-                        cur_y += font_small.get_linesize() + 1
-
-                        path_rect = pygame.Rect(ox + 18, cur_y, ov_w - 36, font_tiny.get_linesize() + 4)
-                        draw_wrapped_text(screen, m_item.get("source_path", u""), font_tiny, (175, 185, 205), path_rect)
-                        cur_y += font_tiny.get_linesize() + 8
-
-                    st_title_short = STYLE_TITLES.get(photo_style, (photo_style,))[0]
-                    hint_str = u"%s (Btn %d) | Appuyez 2x sur un bouton pour assigner" % (st_title_short, style_button_code)
-                    if now < style_bound_msg_timer:
-                        hint_str = u"Nouveau bouton Style enregistré : Code %d !" % style_button_code
-                        hint_col = (52, 211, 153)
-                    elif last_detected_code and now < code_timer:
-                        hint_str = u"Code détecté : %d (Ré-appuyez pour assigner au Style)" % last_detected_code
-                        hint_col = (250, 204, 21)
-                    else:
-                        hint_col = (140, 155, 185)
-
-                    screen.blit(font_tiny.render(hint_str, True, hint_col), (ox + 18, oy + ov_h - 24))
-
-                    cnt = u"%ds" % int(max(0, info_timer - now))
-                    ctxt = font_tiny.render(cnt, True, (250, 204, 21))
-                    screen.blit(ctxt, (ox + ov_w - ctxt.get_width() - 16, oy + ov_h - 24))
+            elif internal_mode != MODE_PHOTOS and overlay_level != 0:
+                draw_video_backdrop(screen, sw, sh, internal_mode, video_meta, is_muted, font_main, font_small, font_regular)
+            elif internal_mode != MODE_PHOTOS and overlay_level == 0 and not need_load:
+                # Redessine la barre inférieure de 60px (sous omxplayer) pour afficher/effacer le toast de son ou de cycle
+                pygame.draw.rect(screen, (0, 0, 0), (0, sh - 60, sw, 60))
+                if internal_mode == MODE_VIDEOS_GAMES:
+                    g_name = video_meta.get("game", u"")
+                    c_name = video_meta.get("console", u"")
+                    t1 = font_small.render(g_name, True, (255, 255, 255))
+                    t2 = font_small.render(c_name, True, (0, 255, 255))
+                    screen.blit(t2, (20, sh - 45))
+                    screen.blit(t1, (sw - t1.get_width() - 20, sh - 45))
                 else:
-                    if now < speed_overlay_timer:
-                        img_per_min = int(round(60.0 / display_time))
-                        spd_badge = create_rounded_box(230, 42, 21, (14, 17, 26), border_color=(250, 204, 21), alpha=220)
-                        screen.blit(spd_badge, (24, sh - 66))
-                        spd_txt = font_small.render(u"%d images / min" % img_per_min, True, (250, 204, 21))
-                        screen.blit(spd_txt, (24 + (230 - spd_txt.get_width()) // 2, sh - 66 + (42 - spd_txt.get_height()) // 2))
+                    lbl = video_meta.get("label", u"Vidéo Perso")
+                    inf = video_meta.get("info", u"")
+                    t1 = font_small.render(lbl, True, (255, 255, 255))
+                    screen.blit(t1, (sw - t1.get_width() - 20, sh - 45))
+                    if inf:
+                        t2 = font_tiny.render(u"Durée : %s" % inf, True, (200, 200, 200))
+                        screen.blit(t2, (20, sh - 42))
+                if now < toast_State[2] and toast_State[0]:
+                    t_surf = font_small.render(toast_State[0], True, toast_State[1])
+                    screen.blit(t_surf, ((sw - t_surf.get_width()) // 2, sh - 45))
 
-            # OVERLAY CHANGEMENT DE STYLE (en haut de l'écran pour admirer le rendu en direct)
-            if now < style_overlay_timer and now >= mode_overlay_timer:
-                st_title, st_sub, accent = STYLE_TITLES.get(photo_style, (u"Style : Moderne", u"", (99, 179, 237)))
-                draw_centered_toast(screen, sw, sh, st_title, st_sub, font_main, font_regular, accent_color=accent, y_center=int(sh * 0.11))
-
-            # OVERLAYS CENTRÉS (Mode / Son)
-            if now < mode_overlay_timer:
-                screen.fill((0, 0, 0))
-                mns = {MODE_PHOTOS: u"Photos", MODE_VIDEOS_PERSO: u"Vidéos", MODE_VIDEOS_GAMES: u"Jeux", MODE_CYCLE: u"Cycle Auto"}
-                st_title = STYLE_TITLES.get(photo_style, (u"",))[0] if current_mode in (MODE_PHOTOS, MODE_CYCLE) else u""
-                draw_centered_toast(screen, sw, sh, u"Mode : %s" % mns.get(current_mode), st_title, font_main, font_regular, accent_color=(0, 230, 255))
-
-            if now < mute_overlay_timer:
-                mtx = u"Son : Coupé" if is_muted else u"Son : Actif"
-                draw_centered_toast(screen, sw, sh, mtx, u"", font_main, font_regular, accent_color=(255, 100, 100), y_center=sh // 2 + 60)
+            # --- 6. SUPERPOSITION INFOS/TOOLTIPS (NIVEAU 1), MENU (NIVEAU 2) OU TOAST DISCRET (NIVEAU 0) ---
+            if overlay_level == 1:
+                metas_to_show = modern_scene["metas"] if (internal_mode == MODE_PHOTOS and active_render_style != STYLE_CLASSIC and modern_scene) else [meta_data]
+                idx_num = (indices[current_idx_ptr] + 1) if indices else 1
+                total_cnt = len(all_files) if all_files else 1
+                draw_info_overlay(
+                    screen, sw, sh, current_mode, internal_mode, photo_style, active_render_style, is_muted,
+                    metas_to_show, video_meta, idx_num, total_cnt, overlay_deadline - now,
+                    font_main, font_small, font_regular, font_tiny
+                )
+            elif overlay_level == 2:
+                draw_settings_menu(
+                    screen, sw, sh, menu_selected_row, current_mode, internal_mode, photo_style, is_muted, display_time,
+                    overlay_deadline - now, font_main, font_small, font_regular, font_tiny
+                )
+            elif now < toast_State[2] and internal_mode == MODE_PHOTOS:
+                draw_corner_toast(screen, sw, sh, toast_State[0], font_small, accent_color=toast_State[1])
 
             pygame.display.flip()
             time.sleep(0.03)
