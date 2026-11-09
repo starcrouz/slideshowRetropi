@@ -1158,88 +1158,6 @@ def run_slideshow(enable_animation=True):
             draw_corner_toast(screen, sw, sh, toast_State[0], font_small, accent_color=toast_State[1])
             pygame.display.flip()
 
-    def handle_top_button(now_ts):
-        nonlocal overlay_level, overlay_deadline, menu_selected_row, last_top_btn_time, video_proc, need_load
-        if now_ts - last_top_btn_time < 0.08:
-            return
-        is_double_click = (now_ts - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
-        last_top_btn_time = now_ts
-
-        if is_double_click:
-            last_top_btn_time = 0.0
-            overlay_level = 2
-            menu_selected_row = 0
-            overlay_deadline = now_ts + MENU_DURATION
-            if video_proc:
-                stop_video(video_proc)
-                video_proc = None
-        else:
-            if overlay_level == 0:
-                overlay_level = 1
-                overlay_deadline = now_ts + INFO_DURATION
-                if video_proc:
-                    stop_video(video_proc)
-                    video_proc = None
-            else:
-                was_video = (internal_mode != MODE_PHOTOS)
-                overlay_level = 0
-                if was_video and video_proc is None:
-                    need_load = True
-
-    def trigger_navigation(steer_val):
-        nonlocal current_idx_ptr, current_step, need_load, forced_style, modern_scene, nav_forward_stack, video_proc
-        if not indices:
-            return
-        cached = None
-        if steer_val > 0:
-            # Avance (▶)
-            nav_history.append({
-                "ptr": current_idx_ptr,
-                "step": current_step,
-                "style": active_render_style,
-                "scene": modern_scene
-            })
-            if len(nav_history) > 30:
-                nav_history.pop(0)
-            if nav_forward_stack:
-                hist_item = nav_forward_stack.pop()
-                current_idx_ptr = hist_item["ptr"]
-                forced_style = hist_item.get("style")
-                cached = hist_item.get("scene")
-            else:
-                current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
-                forced_style = None
-            show_toast(u"Suivant ▶", (56, 189, 248))
-        else:
-            # Retour (◀) : reprend exactement la dernière vue visitée
-            if nav_history:
-                nav_forward_stack.append({
-                    "ptr": current_idx_ptr,
-                    "step": current_step,
-                    "style": active_render_style,
-                    "scene": modern_scene
-                })
-                hist_item = nav_history.pop()
-                current_idx_ptr = hist_item["ptr"]
-                forced_style = hist_item.get("style")
-                cached = hist_item.get("scene")
-            else:
-                current_idx_ptr = (current_idx_ptr - 1 + len(indices)) % len(indices)
-                forced_style = None
-            show_toast(u"◀ Précédent", (56, 189, 248))
-
-        if cached is not None and internal_mode == MODE_PHOTOS:
-            modern_scene = cached
-            need_load = False
-        else:
-            need_load = True
-
-        if video_proc:
-            stop_video(video_proc)
-            video_proc = None
-
-        draw_screen_feedback()
-
     def switch_to_internal_mode(new_int_mode, now_ts):
         return (
             new_int_mode,
@@ -1298,6 +1216,9 @@ def run_slideshow(enable_animation=True):
                     video_proc = None
 
             # --- 2. ENTRÉES BOUTONS (/dev/input/event*) ---
+            top_button_triggered = False
+            nav_steer = None
+
             for f in input_files:
                 try:
                     data = f.read(event_size)
@@ -1313,8 +1234,8 @@ def run_slideshow(enable_animation=True):
                                 show_toast(u"Bouton détecté : %d" % ev_code, (52, 211, 153))
                                 draw_screen_feedback()
                             else:
-                                # Bouton Panel Arcade du dessus -> Infos (1 clic) ou Menu (double clic)
-                                handle_top_button(now)
+                                # Bouton Panel Arcade du dessus
+                                top_button_triggered = True
                         data = f.read(event_size)
                 except Exception:
                     pass
@@ -1342,9 +1263,9 @@ def run_slideshow(enable_animation=True):
                         show_toast(u"Touche clavier : %d" % event.key, (52, 211, 153))
                         draw_screen_feedback()
                     else:
-                        handle_top_button(now)
+                        top_button_triggered = True
                 elif event.type == pygame.JOYBUTTONDOWN:
-                    if event.button in (8, 9, 10, 11):
+                    if event.button in (8, 9, 18, 19):
                         # Front buttons sur gamepad (Select/Start)
                         running = False
                         break
@@ -1353,7 +1274,37 @@ def run_slideshow(enable_animation=True):
                         show_toast(u"Bouton Pad : #%d" % event.button, (52, 211, 153))
                         draw_screen_feedback()
                     else:
-                        handle_top_button(now)
+                        top_button_triggered = True
+
+            if not running:
+                break
+
+            # Traitement de l'appui bouton du dessus (1 clic = Infos / 2 clics = Menu)
+            if top_button_triggered:
+                if now - last_top_btn_time >= 0.08:
+                    is_double_click = (now - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
+                    last_top_btn_time = now
+
+                    if is_double_click:
+                        last_top_btn_time = 0.0
+                        overlay_level = 2
+                        menu_selected_row = 0
+                        overlay_deadline = now + MENU_DURATION
+                        if video_proc:
+                            stop_video(video_proc)
+                            video_proc = None
+                    else:
+                        if overlay_level == 0:
+                            overlay_level = 1
+                            overlay_deadline = now + INFO_DURATION
+                            if video_proc:
+                                stop_video(video_proc)
+                                video_proc = None
+                        else:
+                            was_video = (internal_mode != MODE_PHOTOS)
+                            overlay_level = 0
+                            if was_video and video_proc is None:
+                                need_load = True
 
                 if event.type == pygame.JOYAXISMOTION:
                     if event.axis == 0:
@@ -1529,14 +1480,65 @@ def run_slideshow(enable_animation=True):
                             draw_screen_feedback()
                             continue
                     else:
-                        trigger_navigation(steer)
+                        nav_steer = steer
 
             # Exécution de l'action de navigation si le délai de double-tap est écoulé sans second coup
             if cycle_tap_pending != 0 and (now - cycle_tap_time) >= 0.30:
-                st = cycle_tap_pending
+                nav_steer = cycle_tap_pending
                 cycle_tap_pending = 0
                 cycle_tap_time = 0.0
-                trigger_navigation(st)
+
+            if nav_steer is not None and indices:
+                cached = None
+                if nav_steer > 0:
+                    # Avance (▶)
+                    nav_history.append({
+                        "ptr": current_idx_ptr,
+                        "step": current_step,
+                        "style": active_render_style,
+                        "scene": modern_scene
+                    })
+                    if len(nav_history) > 30:
+                        nav_history.pop(0)
+                    if nav_forward_stack:
+                        hist_item = nav_forward_stack.pop()
+                        current_idx_ptr = hist_item["ptr"]
+                        forced_style = hist_item.get("style")
+                        cached = hist_item.get("scene")
+                    else:
+                        current_idx_ptr = (current_idx_ptr + current_step) % len(indices)
+                        forced_style = None
+                    show_toast(u"Suivant ▶", (56, 189, 248))
+                else:
+                    # Retour (◀) : reprend exactement la dernière vue visitée
+                    if nav_history:
+                        nav_forward_stack.append({
+                            "ptr": current_idx_ptr,
+                            "step": current_step,
+                            "style": active_render_style,
+                            "scene": modern_scene
+                        })
+                        hist_item = nav_history.pop()
+                        current_idx_ptr = hist_item["ptr"]
+                        forced_style = hist_item.get("style")
+                        cached = hist_item.get("scene")
+                    else:
+                        current_idx_ptr = (current_idx_ptr - 1 + len(indices)) % len(indices)
+                        forced_style = None
+                    show_toast(u"◀ Précédent", (56, 189, 248))
+
+                if cached is not None and internal_mode == MODE_PHOTOS:
+                    modern_scene = cached
+                    need_load = False
+                else:
+                    need_load = True
+
+                if video_proc:
+                    stop_video(video_proc)
+                    video_proc = None
+
+                draw_screen_feedback()
+                nav_steer = None
 
             show_info = (overlay_level != 0)
 
