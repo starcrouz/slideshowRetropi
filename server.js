@@ -6,7 +6,46 @@ const convert = require('heic-convert');
 const { Jimp } = require('jimp');
 const exifr = require('exifr');
 const crypto = require('crypto');
+const net = require('net');
 const { getPhotoMetadata } = require('./metadata');
+
+function getHostFromUncPath(p) {
+    if (!p) return null;
+    if (p.startsWith('\\\\')) return p.slice(2).split('\\')[0];
+    if (p.startsWith('//')) return p.slice(2).split('/')[0];
+    return null;
+}
+
+let cachedOnlineState = { online: false, checkedAt: 0, checking: null };
+
+function checkBartopOnline(host, port = 445, timeout = 700) {
+    const now = Date.now();
+    if (now - cachedOnlineState.checkedAt < 2500) {
+        return Promise.resolve(cachedOnlineState.online);
+    }
+    if (cachedOnlineState.checking) {
+        return cachedOnlineState.checking;
+    }
+    cachedOnlineState.checking = new Promise((resolve) => {
+        const socket = new net.Socket();
+        let done = false;
+        const finish = (ok) => {
+            if (!done) {
+                done = true;
+                socket.destroy();
+                cachedOnlineState.online = ok;
+                cachedOnlineState.checkedAt = Date.now();
+                cachedOnlineState.checking = null;
+                resolve(ok);
+            }
+        };
+        socket.setTimeout(timeout);
+        socket.connect(port, host, () => finish(true));
+        socket.on('error', () => finish(false));
+        socket.on('timeout', () => finish(false));
+    });
+    return cachedOnlineState.checking;
+}
 
 // Augmenter la limite mémoire pour les grosses photos HEIC/iPhone 15
 Jimp.maxMemoryUsageInMB = 2048;
@@ -243,23 +282,34 @@ app.get('/api/status', (req, res) => {
     res.json({ running: isSelectionRunning() });
 });
 
-// API: Obtenir l'élément actuellement affiché sur le Bartop
-app.get('/api/bartop-current', (req, res) => {
+// API: Obtenir l'élément actuellement affiché sur le Bartop (non-bloquant si le Bartop est éteint)
+app.get('/api/bartop-current', async (req, res) => {
     try {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) {
             return res.status(404).json({ error: 'Config introuvable' });
         }
         const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        const currentFilePath = path.join(path.dirname(config.DEST_DIR), 'current.json');
-        
-        if (fs.existsSync(currentFilePath)) {
-            const data = JSON.parse(fs.readFileSync(currentFilePath, 'utf8'));
-            return res.json(data);
+        const host = getHostFromUncPath(config.DEST_DIR);
+        if (host) {
+            const online = await checkBartopOnline(host);
+            if (!online) {
+                return res.json({ error: `Bartop (${host}) éteint ou hors ligne` });
+            }
         }
-        res.json({ error: "Aucun élément en cours de lecture" });
+
+        const currentFilePath = path.join(path.dirname(config.DEST_DIR), 'current.json');
+        const raw = await fs.promises.readFile(currentFilePath, 'utf8');
+        const data = JSON.parse(raw);
+
+        // Convertir les chemins internes Linux (/recalbox/share/...) en chemin réseau UNC pour l'aperçu vidéo
+        if (host && data.source_path && data.source_path.startsWith('/recalbox/share/')) {
+            const rel = data.source_path.slice('/recalbox/share/'.length).replace(/\//g, '\\');
+            data.source_path = `\\\\${host}\\share\\${rel}`;
+        }
+        return res.json(data);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        return res.json({ error: "Aucun élément en cours de lecture" });
     }
 });
 
@@ -419,31 +469,33 @@ app.get('/api/video', (req, res) => {
 // --- SURVEILLANCE DES COMMANDES DU BARTOP (command.json) ---
 let lastProcessedCommandId = null;
 
-function initLastCommandId() {
+async function initLastCommandId() {
     try {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) return;
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const host = getHostFromUncPath(cfg.DEST_DIR);
+        if (host && !(await checkBartopOnline(host))) return;
         const cmdFile = path.join(path.dirname(cfg.DEST_DIR), 'command.json');
-        if (fs.existsSync(cmdFile)) {
-            const cmd = JSON.parse(fs.readFileSync(cmdFile, 'utf8'));
-            if (cmd && cmd.id) {
-                lastProcessedCommandId = cmd.id;
-            }
+        const raw = await fs.promises.readFile(cmdFile, 'utf8');
+        const cmd = JSON.parse(raw);
+        if (cmd && cmd.id) {
+            lastProcessedCommandId = cmd.id;
         }
     } catch (e) {}
 }
 
-function pollBartopCommands() {
+async function pollBartopCommands() {
     try {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) return;
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const host = getHostFromUncPath(cfg.DEST_DIR);
+        if (host && !(await checkBartopOnline(host))) return;
+
         const bartopDir = path.dirname(cfg.DEST_DIR);
         const cmdFile = path.join(bartopDir, 'command.json');
-        if (!fs.existsSync(cmdFile)) return;
-
-        const raw = fs.readFileSync(cmdFile, 'utf8').trim();
+        const raw = (await fs.promises.readFile(cmdFile, 'utf8')).trim();
         if (!raw) return;
         const cmd = JSON.parse(raw);
         if (!cmd || !cmd.id || cmd.id === lastProcessedCommandId) return;
