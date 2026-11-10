@@ -26,6 +26,15 @@ IMAGE_FOLDER = "/recalbox/share/userscripts/slideshow/images"
 VIDEO_PERSO_FOLDER = "/recalbox/share/userscripts/slideshow/videos"
 ROMS_FOLDER = "/recalbox/share/roms"
 SETTINGS_FILE = "/recalbox/share/userscripts/slideshow/slideshow_settings.json"
+DEBUG_LOG_FILE = "/recalbox/share/userscripts/slideshow/input_debug.log"
+
+
+def log_debug(msg):
+    try:
+        with open(DEBUG_LOG_FILE, 'a') as f_log:
+            f_log.write("[%s] %s\n" % (time.strftime("%Y-%m-%d %H:%M:%S"), msg))
+    except Exception:
+        pass
 
 DEFAULT_DISPLAY_TIME = 15
 MIN_DISPLAY_TIME = 1
@@ -1225,8 +1234,10 @@ def run_slideshow(enable_animation=True):
                     while data:
                         _, _, ev_type, ev_code, ev_value = struct.unpack(event_format, data)
                         if ev_type == EV_KEY and ev_value == 1:
-                            if ev_code in front_buttons:
-                                # Boutons Façade (Start / Select / Coin) -> Quitter
+                            is_front = (ev_code in front_buttons)
+                            log_debug("EV_KEY code=%d is_front=%s front_set=%s" % (ev_code, is_front, list(front_buttons)))
+                            if is_front:
+                                log_debug("EXIT via front button code=%d" % ev_code)
                                 running = False
                                 break
                             elif learning_button_timer > now:
@@ -1249,13 +1260,13 @@ def run_slideshow(enable_animation=True):
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    log_debug("EXIT via pygame.QUIT")
                     running = False
                     break
                 elif event.type == pygame.KEYDOWN:
+                    log_debug("KEYDOWN key=%s" % str(event.key))
                     if event.key in (pygame.K_ESCAPE, pygame.K_q):
-                        running = False
-                        break
-                    elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                        log_debug("EXIT via KEYDOWN escape/q")
                         running = False
                         break
                     elif learning_button_timer > now:
@@ -1264,49 +1275,17 @@ def run_slideshow(enable_animation=True):
                         draw_screen_feedback()
                     else:
                         top_button_triggered = True
+
                 elif event.type == pygame.JOYBUTTONDOWN:
-                    if event.button in (8, 9, 18, 19):
-                        # Front buttons sur gamepad (Select/Start)
-                        running = False
-                        break
-                    elif learning_button_timer > now:
+                    log_debug("JOYBUTTONDOWN button=%s" % str(event.button))
+                    if learning_button_timer > now:
                         last_learned_code = 1000 + event.button
                         show_toast(u"Bouton Pad : #%d" % event.button, (52, 211, 153))
                         draw_screen_feedback()
                     else:
                         top_button_triggered = True
 
-            if not running:
-                break
-
-            # Traitement de l'appui bouton du dessus (1 clic = Infos / 2 clics = Menu)
-            if top_button_triggered:
-                if now - last_top_btn_time >= 0.08:
-                    is_double_click = (now - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
-                    last_top_btn_time = now
-
-                    if is_double_click:
-                        last_top_btn_time = 0.0
-                        overlay_level = 2
-                        menu_selected_row = 0
-                        overlay_deadline = now + MENU_DURATION
-                        if video_proc:
-                            stop_video(video_proc)
-                            video_proc = None
-                    else:
-                        if overlay_level == 0:
-                            overlay_level = 1
-                            overlay_deadline = now + INFO_DURATION
-                            if video_proc:
-                                stop_video(video_proc)
-                                video_proc = None
-                        else:
-                            was_video = (internal_mode != MODE_PHOTOS)
-                            overlay_level = 0
-                            if was_video and video_proc is None:
-                                need_load = True
-
-                if event.type == pygame.JOYAXISMOTION:
+                elif event.type == pygame.JOYAXISMOTION:
                     if event.axis == 0:
                         if abs(event.value) < 0.25:
                             joy_axis_x_neutral = True
@@ -1352,6 +1331,33 @@ def run_slideshow(enable_animation=True):
 
             if not running:
                 break
+
+            # Traitement de l'appui bouton du dessus (1 clic = Infos / 2 clics = Menu)
+            if top_button_triggered:
+                if now - last_top_btn_time >= 0.08:
+                    is_double_click = (now - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
+                    last_top_btn_time = now
+
+                    if is_double_click:
+                        last_top_btn_time = 0.0
+                        overlay_level = 2
+                        menu_selected_row = 0
+                        overlay_deadline = now + MENU_DURATION
+                        if video_proc:
+                            stop_video(video_proc)
+                            video_proc = None
+                    else:
+                        if overlay_level == 0:
+                            overlay_level = 1
+                            overlay_deadline = now + INFO_DURATION
+                            if video_proc:
+                                stop_video(video_proc)
+                                video_proc = None
+                        else:
+                            was_video = (internal_mode != MODE_PHOTOS)
+                            overlay_level = 0
+                            if was_video and video_proc is None:
+                                need_load = True
 
             # Traitement des actions verticales (Haut ▲ / Bas ▼)
             for vdir in vert_actions:
