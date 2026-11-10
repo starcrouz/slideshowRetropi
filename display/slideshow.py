@@ -1064,6 +1064,115 @@ def run_slideshow(enable_animation=True):
     bottom_grad_surf = make_bottom_gradient(sw, bottom_grad_h)
     scanline_surf = make_scanline_overlay(sw, sh)
 
+    # =========================================================================
+    # PHASE TEMPORAIRE : DÉTECTION ET TEST DES TOUCHES AU DÉMARRAGE
+    # Appuyez sur tous vos boutons pour afficher leurs codes à l'écran.
+    # Donnez un coup de joystick (ou touche Entrée) pour continuer vers le diaporama !
+    # =========================================================================
+    detect_running = True
+    last_detect_code = None
+    last_detect_type = u""
+    detect_history = []
+    clock_detect = pygame.time.Clock()
+    log_debug("STARTED INTRO DETECTION SCREEN")
+
+    while detect_running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+                detect_running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_ESCAPE, pygame.K_q, pygame.K_RETURN):
+                    detect_running = False
+                else:
+                    last_detect_code = event.key
+                    last_detect_type = u"Clavier (%d)" % event.key
+                    detect_history.append((event.key, last_detect_type, time.strftime("%H:%M:%S")))
+                    if len(detect_history) > 10:
+                        detect_history.pop(0)
+            elif event.type == pygame.JOYBUTTONDOWN:
+                last_detect_code = event.button
+                last_detect_type = u"Pad Bouton #%d" % event.button
+                detect_history.append((event.button, last_detect_type, time.strftime("%H:%M:%S")))
+                if len(detect_history) > 10:
+                    detect_history.pop(0)
+            elif event.type == pygame.JOYAXISMOTION:
+                if abs(event.value) > 0.60:
+                    # Un coup de joystick -> Lance la suite (le diaporama) !
+                    detect_running = False
+            elif event.type == pygame.JOYHATMOTION:
+                hx, hy = event.value
+                if hx != 0 or hy != 0:
+                    detect_running = False
+
+        for f in input_files:
+            try:
+                data = f.read(event_size)
+                while data:
+                    _, _, ev_type, ev_code, ev_val = struct.unpack(event_format, data)
+                    if ev_type == EV_KEY and ev_val == 1:
+                        last_detect_code = ev_code
+                        is_front = (ev_code in front_buttons)
+                        last_detect_type = u"FAÇADE (Quitte)" if is_front else u"PANEL SUPÉRIEUR"
+                        log_debug("INTRO DETECT: code=%d (%s)" % (ev_code, last_detect_type))
+                        try:
+                            with open("/recalbox/share/userscripts/slideshow/button_identification.log", "a") as f_id:
+                                f_id.write("[%s] Code: %d -> %s\n" % (time.strftime("%H:%M:%S"), ev_code, last_detect_type))
+                        except Exception:
+                            pass
+                        detect_history.append((ev_code, last_detect_type, time.strftime("%H:%M:%S")))
+                        if len(detect_history) > 10:
+                            detect_history.pop(0)
+                    data = f.read(event_size)
+            except Exception:
+                pass
+
+        screen.fill((12, 16, 28))
+
+        # Titre
+        t_title = font_main.render(u"TESTEUR DE TOUCHES BARTOP", True, (56, 189, 248))
+        screen.blit(t_title, ((sw - t_title.get_width()) // 2, int(sh * 0.05)))
+
+        t_sub = font_small.render(u"Appuyez sur chaque bouton pour afficher son code exact", True, (210, 220, 240))
+        screen.blit(t_sub, ((sw - t_sub.get_width()) // 2, int(sh * 0.12)))
+
+        # Boite centrale code
+        box_w = int(sw * 0.86)
+        box_h = int(sh * 0.32)
+        box_x = (sw - box_w) // 2
+        box_y = int(sh * 0.18)
+        pygame.draw.rect(screen, (20, 28, 46), (box_x, box_y, box_w, box_h), 0)
+        pygame.draw.rect(screen, (99, 102, 241), (box_x, box_y, box_w, box_h), 3)
+
+        if last_detect_code is not None:
+            c_txt = font_editorial.render(u"CODE DÉTECTÉ : %s" % str(last_detect_code), True, (251, 191, 36))
+            screen.blit(c_txt, ((sw - c_txt.get_width()) // 2, box_y + int(box_h * 0.22)))
+
+            col = (248, 113, 113) if u"FAÇADE" in last_detect_type else (52, 211, 153)
+            ty_txt = font_main.render(u"Nature actuelle : %s" % last_detect_type, True, col)
+            screen.blit(ty_txt, ((sw - ty_txt.get_width()) // 2, box_y + int(box_h * 0.60)))
+        else:
+            w_txt = font_main.render(u"Appuyez sur vos boutons maintenant...", True, (148, 163, 184))
+            screen.blit(w_txt, ((sw - w_txt.get_width()) // 2, box_y + int(box_h * 0.40)))
+
+        # Historique
+        hy_start = box_y + box_h + 20
+        h_title = font_small.render(u"Dernières touches pressées :", True, (165, 180, 252))
+        screen.blit(h_title, (box_x + 20, hy_start))
+
+        for idx, (code, c_type, c_time) in enumerate(reversed(detect_history)):
+            r_y = hy_start + 28 + idx * int(sh * 0.038)
+            c_col = (248, 113, 113) if u"FAÇADE" in c_type else (110, 231, 183)
+            row_s = font_tiny.render(u"[%s]   Code Linux: %-4s   •   %s" % (c_time, str(code), c_type), True, c_col)
+            screen.blit(row_s, (box_x + 30, r_y))
+
+        # Consigne bas
+        foot = font_small.render(u"🕹️  DONNEZ UN COUP DE JOYSTICK POUR DÉMARRER LE DIAPORAMA  🕹️", True, (34, 211, 238))
+        screen.blit(foot, ((sw - foot.get_width()) // 2, sh - 45))
+
+        pygame.display.flip()
+        clock_detect.tick(30)
+
     def get_files_for_mode(mode):
         if mode == MODE_PHOTOS:
             if not os.path.exists(IMAGE_FOLDER):
