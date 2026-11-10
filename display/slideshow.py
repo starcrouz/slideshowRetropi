@@ -24,8 +24,11 @@ FRONT_BUTTONS_DEFAULT = [294, 295, 296, 297, 312, 313, 314, 315]
 
 IMAGE_FOLDER = "/recalbox/share/userscripts/slideshow/images"
 VIDEO_PERSO_FOLDER = "/recalbox/share/userscripts/slideshow/videos"
+FOCUS_FOLDER = "/recalbox/share/userscripts/slideshow/focus"
 ROMS_FOLDER = "/recalbox/share/roms"
 SETTINGS_FILE = "/recalbox/share/userscripts/slideshow/slideshow_settings.json"
+COMMAND_FILE = "/recalbox/share/userscripts/slideshow/command.json"
+COMMAND_STATUS_FILE = "/recalbox/share/userscripts/slideshow/command_status.json"
 DEBUG_LOG_FILE = "/recalbox/share/userscripts/slideshow/input_debug.log"
 
 
@@ -99,13 +102,15 @@ MODE_PHOTOS = 1
 MODE_VIDEOS_PERSO = 2
 MODE_VIDEOS_GAMES = 3
 MODE_CYCLE = 4
+MODE_FOCUS = 5
 CYCLE_INTERVAL = 60
 
 MODE_NAMES = {
     MODE_PHOTOS: u"Photos",
     MODE_VIDEOS_PERSO: u"Vidéos Perso",
     MODE_VIDEOS_GAMES: u"Jeux (Roms)",
-    MODE_CYCLE: u"Cycle Auto (60s)"
+    MODE_CYCLE: u"Cycle Auto (60s)",
+    MODE_FOCUS: u"Moment (Focus)"
 }
 
 # Input event constants
@@ -184,6 +189,81 @@ def write_current_state(data):
             json.dump(data, f)
     except Exception:
         pass
+
+
+def send_pc_command(action_name, source_path=None):
+    cmd_id = "cmd_%d" % int(time.time() * 1000)
+    payload = {
+        "id": cmd_id,
+        "action": action_name,
+        "source_path": source_path or u"",
+        "timestamp": time.time()
+    }
+    try:
+        with open(COMMAND_FILE, 'w') as f:
+            json.dump(payload, f)
+        return cmd_id
+    except Exception as e:
+        log_debug("ERROR writing command.json: %s" % str(e))
+        return None
+
+
+def read_pc_command_status():
+    if not os.path.exists(COMMAND_STATUS_FILE):
+        return None
+    try:
+        with open(COMMAND_STATUS_FILE, 'r') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def get_level1_actions(internal_mode, is_photo_item, metas_to_show, video_meta):
+    """Construit les boutons d'action rapides du menu de 1er niveau (1 clic)."""
+    actions = [
+        {"id": "close", "label": u"Fermer", "source_path": u"", "color": (129, 140, 248)}
+    ]
+
+    if internal_mode == MODE_FOCUS:
+        actions.append({
+            "id": "exit_focus",
+            "label": u"Quitter ce moment",
+            "source_path": u"",
+            "color": (248, 113, 113)
+        })
+
+    if is_photo_item:
+        valid_metas = [m for m in (metas_to_show or [])[:3] if m and m.get("source_path")]
+        if len(valid_metas) == 1:
+            actions.append({
+                "id": "focus",
+                "label": u"+ Voir ce moment",
+                "source_path": valid_metas[0].get("source_path", u""),
+                "color": (52, 211, 153)
+            })
+        elif len(valid_metas) > 1:
+            for idx_m, m_item in enumerate(valid_metas):
+                actions.append({
+                    "id": "focus",
+                    "label": u"+ Moment Photo %d" % (idx_m + 1),
+                    "source_path": m_item.get("source_path", u""),
+                    "color": (52, 211, 153)
+                })
+    elif internal_mode == MODE_VIDEOS_PERSO and video_meta and video_meta.get("source_path"):
+        actions.append({
+            "id": "focus",
+            "label": u"+ Voir ce moment",
+            "source_path": video_meta.get("source_path", u""),
+            "color": (52, 211, 153)
+        })
+
+    actions.append({
+        "id": "new_draw",
+        "label": u"Nouveau tirage PC",
+        "source_path": u"",
+        "color": (251, 191, 36)
+    })
+    return actions
 
 
 def clean_game_name(name):
@@ -801,51 +881,61 @@ def draw_corner_toast(screen, sw, sh, text_str, font_small, accent_color=(56, 18
 
 def draw_info_overlay(screen, sw, sh, current_mode, internal_mode, photo_style, active_render_style, is_muted,
                       metas_to_show, video_meta, idx_num, total_count, remain_sec,
-                      font_main, font_small, font_regular, font_tiny):
-    # CARTE UNIQUE ÉLÉGANTE ET ÉPURÉE EN BAS D'ÉCRAN (Fond sombre translucide)
-    card_w = int(sw * 0.92)
+                      font_main, font_small, font_regular, font_tiny,
+                      is_photo_item=True, actions=None, selected_action_idx=0):
+    # CARTE UNIQUE ÉLÉGANTE ET ÉPURÉE EN BAS D'ÉCRAN (Fond sombre translucide + Barre d'actions de 1er niveau)
+    card_w = int(sw * 0.94)
     card_x = (sw - card_w) // 2
-    
-    # Nombre d'éléments affichés
-    items = metas_to_show[:3] if (internal_mode == MODE_PHOTOS and metas_to_show) else [{}]
-    if internal_mode == MODE_PHOTOS:
+
+    if actions is None:
+        actions = get_level1_actions(internal_mode, is_photo_item, metas_to_show, video_meta)
+
+    action_bar_h = 54
+    items = metas_to_show[:3] if (is_photo_item and metas_to_show) else [{}]
+    if is_photo_item:
         content_lines = len(items)
-        card_h = min(int(sh * 0.38), int(sh * 0.13) + content_lines * (font_small.get_linesize() + font_tiny.get_linesize() + 10))
+        card_h = min(
+            int(sh * 0.46),
+            int(sh * 0.12) + content_lines * (font_small.get_linesize() + font_tiny.get_linesize() + 10) + action_bar_h
+        )
     else:
-        card_h = int(sh * 0.20)
+        card_h = int(sh * 0.20) + action_bar_h
 
-    card_y = sh - card_h - int(sh * 0.03)
+    card_y = sh - card_h - int(sh * 0.025)
 
-    # Boîte principale avec bordure lumineuse discrète
-    box = create_rounded_box(card_w, card_h, 18, (11, 15, 25), border_color=(79, 70, 229), alpha=236, border_width=2)
+    # Boîte principale avec bordure lumineuse
+    border_col = (52, 211, 153) if internal_mode == MODE_FOCUS else (79, 70, 229)
+    box = create_rounded_box(card_w, card_h, 18, (11, 15, 25), border_color=border_col, alpha=240, border_width=2)
     screen.blit(box, (card_x, card_y))
 
     # LIGNE 1 : Barre d'aide compacte et compte à rebours
-    if current_mode == MODE_CYCLE:
+    if internal_mode == MODE_FOCUS:
+        mode_badge = u"Moment (Focus)"
+    elif current_mode == MODE_CYCLE:
         mode_badge = u"Cycle Auto (%s)" % MODE_NAMES.get(internal_mode, u"")
     else:
         mode_badge = MODE_NAMES.get(current_mode, u"")
 
-    if internal_mode == MODE_PHOTOS:
+    if is_photo_item:
         st_short = STYLE_SHORT_LABELS.get(photo_style, photo_style)
-        hint_str = u"Joystick G/D : Photo préc/suiv (2x : Phase)  |  Haut/Bas : Style (%s)  |  2x Bouton : Menu" % st_short
+        hint_str = u"G/D : Choisir action  |  1 clic : Valider  |  Haut/Bas : Style (%s)  |  2x Bouton : Réglages" % st_short
     else:
         snd_short = u"Muet" if is_muted else u"Actif"
-        hint_str = u"Joystick G/D : Vidéo préc/suiv (2x : Phase)  |  Haut/Bas : Son (%s)  |  2x Bouton : Menu" % snd_short
+        hint_str = u"G/D : Choisir action  |  1 clic : Valider  |  Haut/Bas : Son (%s)  |  2x Bouton : Réglages" % snd_short
 
     hint_surf = font_tiny.render(hint_str, True, (165, 180, 252))
-    screen.blit(hint_surf, (card_x + 24, card_y + 14))
+    screen.blit(hint_surf, (card_x + 24, card_y + 12))
 
-    timer_str = u"Fermer (1 clic) - %ds" % int(max(0, math.ceil(remain_sec)))
+    timer_str = u"%ds" % int(max(0, math.ceil(remain_sec)))
     timer_surf = font_tiny.render(timer_str, True, (251, 191, 36))
-    screen.blit(timer_surf, (card_x + card_w - timer_surf.get_width() - 24, card_y + 14))
+    screen.blit(timer_surf, (card_x + card_w - timer_surf.get_width() - 24, card_y + 12))
 
-    sep_y = card_y + 20 + hint_surf.get_height()
+    sep_y = card_y + 18 + hint_surf.get_height()
     pygame.draw.line(screen, (34, 44, 70), (card_x + 20, sep_y), (card_x + card_w - 20, sep_y), 1)
 
     # LIGNE 2+ : Détails réels du média
-    cur_y = sep_y + 10
-    if internal_mode == MODE_PHOTOS:
+    cur_y = sep_y + 8
+    if is_photo_item:
         for idx_m, m_item in enumerate(items):
             prefix = (u"%d. " % (idx_m + 1)) if len(items) > 1 else u""
             label_raw = m_item.get("label", u"Sans titre") or u"Sans titre"
@@ -863,8 +953,8 @@ def draw_info_overlay(screen, sw, sh, current_mode, internal_mode, photo_style, 
             src_p = m_item.get("source_path", u"")
             path_rect = pygame.Rect(card_x + 24, cur_y, card_w - 48, font_tiny.get_linesize() + 4)
             draw_wrapped_text(screen, src_p, font_tiny, (148, 163, 184), path_rect)
-            cur_y += font_tiny.get_linesize() + 8
-    elif internal_mode == MODE_VIDEOS_PERSO:
+            cur_y += font_tiny.get_linesize() + 6
+    elif internal_mode in (MODE_VIDEOS_PERSO, MODE_FOCUS):
         lbl = video_meta.get("label", u"Vidéo Perso") or u"Vidéo Perso"
         inf = video_meta.get("info", u"")
         line1 = u"[VIDÉO] %s  (Durée : %s)" % (lbl, inf) if inf else u"[VIDÉO] %s" % lbl
@@ -886,6 +976,40 @@ def draw_info_overlay(screen, sw, sh, current_mode, internal_mode, photo_style, 
         cur_y += font_small.get_linesize() + 4
         path_rect = pygame.Rect(card_x + 24, cur_y, card_w - 48, font_tiny.get_linesize() + 4)
         draw_wrapped_text(screen, video_meta.get("source_path", u""), font_tiny, (148, 163, 184), path_rect)
+
+    # LIGNE DU BAS : BARRE D'ACTIONS INTERACTIVE DE 1ER NIVEAU
+    bar_sep_y = card_y + card_h - action_bar_h
+    pygame.draw.line(screen, (34, 44, 70), (card_x + 20, bar_sep_y), (card_x + card_w - 20, bar_sep_y), 1)
+
+    if actions:
+        btn_h = 36
+        btn_y = bar_sep_y + (action_bar_h - btn_h) // 2
+        gap_x = 14
+        rendered_btns = []
+        total_btns_w = 0
+
+        for idx_a, act in enumerate(actions):
+            is_sel = (idx_a == selected_action_idx)
+            lbl_str = (u">> %s <<" % act["label"]) if is_sel else act["label"]
+            txt_col = (255, 255, 255) if is_sel else (195, 205, 222)
+            t_surf = font_regular.render(lbl_str, True, txt_col)
+            bw = t_surf.get_width() + (34 if is_sel else 28)
+            rendered_btns.append((bw, t_surf, act, is_sel))
+            total_btns_w += bw
+
+        total_btns_w += gap_x * max(0, len(rendered_btns) - 1)
+        cur_bx = card_x + (card_w - total_btns_w) // 2
+
+        for bw, t_surf, act, is_sel in rendered_btns:
+            accent_c = act.get("color", (99, 179, 237))
+            if is_sel:
+                bg_c = (int(accent_c[0] * 0.25), int(accent_c[1] * 0.25), int(accent_c[2] * 0.25))
+                pbox = create_rounded_box(bw, btn_h, 10, bg_c, border_color=accent_c, alpha=245, border_width=2)
+            else:
+                pbox = create_rounded_box(bw, btn_h, 10, (19, 26, 44), border_color=(45, 58, 86), alpha=210, border_width=1)
+            screen.blit(pbox, (cur_bx, btn_y))
+            screen.blit(t_surf, (cur_bx + (bw - t_surf.get_width()) // 2, btn_y + (btn_h - t_surf.get_height()) // 2))
+            cur_bx += bw + gap_x
 
 
 def draw_settings_menu(screen, sw, sh, selected_row, current_mode, internal_mode, photo_style, is_muted, display_time,
@@ -1073,6 +1197,14 @@ def run_slideshow(enable_animation=True):
             if not os.path.exists(VIDEO_PERSO_FOLDER):
                 return []
             return sorted([os.path.join(VIDEO_PERSO_FOLDER, f) for f in os.listdir(VIDEO_PERSO_FOLDER) if f.lower().endswith(('.mp4', '.mkv', '.avi', '.mov'))])
+        elif mode == MODE_FOCUS:
+            if not os.path.exists(FOCUS_FOLDER):
+                return []
+            return sorted([
+                os.path.join(FOCUS_FOLDER, f)
+                for f in os.listdir(FOCUS_FOLDER)
+                if f.lower().endswith(('.jpg', '.jpeg', '.mp4', '.mkv', '.avi', '.mov'))
+            ])
         elif mode == MODE_VIDEOS_GAMES:
             vids = []
             if os.path.exists(ROMS_FOLDER):
@@ -1083,6 +1215,16 @@ def run_slideshow(enable_animation=True):
                                 vids.append(os.path.join(root, f))
             return sorted(vids)
         return []
+
+    def is_photo_item_at(int_mode, files_list, idx_list, ptr):
+        if int_mode == MODE_PHOTOS:
+            return True
+        if int_mode == MODE_FOCUS:
+            if idx_list and files_list and 0 <= ptr < len(idx_list):
+                fp = files_list[idx_list[ptr]]
+                return fp.lower().endswith(('.jpg', '.jpeg'))
+            return True
+        return False
 
     all_files = get_files_for_mode(internal_mode)
     indices = list(range(len(all_files)))
@@ -1117,23 +1259,34 @@ def run_slideshow(enable_animation=True):
     has_rendered_photo = False
     prev_polaroid_ghost = None
 
-    # Niveau d'overlay : 0 = Écran propre | 1 = Infos Média + Tooltips | 2 = Menu Réglages
+    # Niveau d'overlay : 0 = Écran propre | 1 = Infos Média + Actions 1er niveau | 2 = Menu Réglages
     overlay_level = 0
     overlay_deadline = 0.0
-    INFO_DURATION = 10.0
+    INFO_DURATION = 11.0
     MENU_DURATION = 14.0
+    info_selected_action = 0
     menu_selected_row = 0
     MENU_ROW_COUNT = 6
+
+    # État de pilotage Bartop -> PC & Mode Focus (Album éphémère d'un moment)
+    pending_cmd_id = None
+    pending_cmd_action = None
+    pending_cmd_start = 0.0
+    pending_cmd_ready_handled = False
+    pending_cmd_unack_warned = False
+    last_cmd_poll = 0.0
+    last_cmd_msg = u""
+    saved_before_focus = None
 
     # Mode détection / apprentissage de bouton depuis le menu
     learning_button_timer = 0.0
     last_learned_code = None
 
-    # Toast éphémère en haut à droite (lors d'une action directe au joystick hors menu)
+    # Toast éphémère en bas au centre (lors d'une action directe au joystick ou retour PC)
     toast_text = u""
     toast_color = (56, 189, 248)
     toast_timer = 0.0
-    TOAST_DURATION = 1.4
+    TOAST_DURATION = 1.6
 
     # Détection double-clic boutons du dessus & double-coup joystick gauche/droite
     last_top_btn_time = 0.0
@@ -1157,10 +1310,10 @@ def run_slideshow(enable_animation=True):
     VIDEO_MAX_PLAY_SECONDS = 210
     devnull_f = open(os.devnull, 'wb')
 
-    def show_toast(msg, color=(56, 189, 248)):
+    def show_toast(msg, color=(56, 189, 248), duration=None):
         toast_State[0] = msg
         toast_State[1] = color
-        toast_State[2] = time.time() + TOAST_DURATION
+        toast_State[2] = time.time() + (duration if duration is not None else TOAST_DURATION)
 
     toast_State = [u"", (56, 189, 248), 0.0]
 
@@ -1199,32 +1352,132 @@ def run_slideshow(enable_animation=True):
         while running:
             now = time.time()
             show_info = (overlay_level != 0)
+            curr_is_photo = is_photo_item_at(internal_mode, all_files, indices, current_idx_ptr)
 
-            # --- 1. LOGIQUE TIMERS & CYCLE ---
+            # --- 1. LOGIQUE TIMERS, CYCLE & SUIVI DES COMMANDES PC ---
             if overlay_level != 0 and now > overlay_deadline:
-                was_video = (internal_mode != MODE_PHOTOS)
+                was_video = not curr_is_photo
                 overlay_level = 0
                 show_info = False
                 if was_video and video_proc is None:
                     need_load = True
 
-            if current_mode == MODE_CYCLE and overlay_level == 0 and now - last_cycle_time > CYCLE_INTERVAL:
-                internal_mode = (internal_mode % 3) + 1
-                all_files = get_files_for_mode(internal_mode)
-                indices = list(range(len(all_files)))
-                random.shuffle(indices)
-                current_idx_ptr = 0
-                current_step = 1
-                nav_history = []
-                nav_forward_stack = []
-                modern_scene = None
-                need_load = True
-                last_cycle_time = now
-                prev_screen_snapshot = None
-                has_rendered_photo = False
-                if video_proc:
-                    stop_video(video_proc)
-                    video_proc = None
+            # Surveillance en tâche de fond du statut renvoyé par le PC (command_status.json)
+            if pending_cmd_id is not None and (now - last_cmd_poll) >= 1.0:
+                last_cmd_poll = now
+                if now - pending_cmd_start > 180.0:
+                    pending_cmd_id = None
+                else:
+                    st_data = read_pc_command_status()
+                    if st_data and st_data.get("id") == pending_cmd_id:
+                        st_state = st_data.get("state", "")
+                        st_msg = st_data.get("message", u"")
+                        st_ready = bool(st_data.get("ready", False))
+
+                        if st_msg and st_msg != last_cmd_msg:
+                            last_cmd_msg = st_msg
+                            col = (52, 211, 153) if st_state in ("ready", "done") else ((248, 113, 113) if st_state == "error" else (56, 189, 248))
+                            show_toast(st_msg, col, duration=3.0)
+
+                        if pending_cmd_action == "focus":
+                            if st_ready and not pending_cmd_ready_handled:
+                                focus_files = get_files_for_mode(MODE_FOCUS)
+                                if focus_files:
+                                    pending_cmd_ready_handled = True
+                                    if internal_mode != MODE_FOCUS:
+                                        saved_before_focus = (internal_mode, list(all_files), list(indices), current_idx_ptr)
+                                    internal_mode = MODE_FOCUS
+                                    all_files = focus_files
+                                    indices = list(range(len(all_files)))
+                                    current_idx_ptr = 0
+                                    current_step = 1
+                                    nav_history = []
+                                    nav_forward_stack = []
+                                    modern_scene = None
+                                    prev_screen_snapshot = None
+                                    has_rendered_photo = False
+                                    need_load = True
+                                    manual_skip = True
+                                    last_cycle_time = now
+                                    if video_proc:
+                                        stop_video(video_proc)
+                                        video_proc = None
+                                    lbl_m = st_data.get("label") or u"Ce moment"
+                                    show_toast(u"Moment prêt : %s" % lbl_m, (52, 211, 153), duration=3.2)
+                            elif pending_cmd_ready_handled and internal_mode == MODE_FOCUS:
+                                focus_files = get_files_for_mode(MODE_FOCUS)
+                                if len(focus_files) > len(all_files):
+                                    all_files = focus_files
+                                    indices = list(range(len(all_files)))
+
+                        if st_state in ("done", "error"):
+                            if pending_cmd_action == "new_draw" and st_state == "done":
+                                if internal_mode != MODE_FOCUS:
+                                    all_files = get_files_for_mode(internal_mode)
+                                    indices = list(range(len(all_files)))
+                                    random.shuffle(indices)
+                                    current_idx_ptr = 0
+                                    current_step = 1
+                                    nav_history = []
+                                    nav_forward_stack = []
+                                    need_load = True
+                                    manual_skip = True
+                                    if video_proc:
+                                        stop_video(video_proc)
+                                        video_proc = None
+                                show_toast(st_msg or u"Nouveau tirage PC terminé !", (52, 211, 153), duration=3.5)
+                            elif pending_cmd_action == "focus" and st_state == "done" and internal_mode == MODE_FOCUS:
+                                focus_files = get_files_for_mode(MODE_FOCUS)
+                                if len(focus_files) != len(all_files):
+                                    all_files = focus_files
+                                    indices = list(range(len(all_files)))
+                            pending_cmd_id = None
+                    elif (now - pending_cmd_start) > 7.5 and not pending_cmd_unack_warned:
+                        pending_cmd_unack_warned = True
+                        show_toast(u"Serveur PC en attente (vérifiez que le serveur tourne sur le PC)", (251, 191, 36), duration=4.0)
+
+            # En mode Focus, on laisse 3 minutes d'inactivité avant de revenir au cycle normal
+            focus_Or_Cycle_Interval = 180 if internal_mode == MODE_FOCUS else CYCLE_INTERVAL
+            if overlay_level == 0 and (now - last_cycle_time > focus_Or_Cycle_Interval):
+                if internal_mode == MODE_FOCUS:
+                    if saved_before_focus:
+                        internal_mode, all_files, indices, current_idx_ptr = saved_before_focus
+                        saved_before_focus = None
+                    else:
+                        internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
+                        all_files = get_files_for_mode(internal_mode)
+                        indices = list(range(len(all_files)))
+                        random.shuffle(indices)
+                        current_idx_ptr = 0
+                    current_step = 1
+                    nav_history = []
+                    nav_forward_stack = []
+                    modern_scene = None
+                    need_load = True
+                    last_cycle_time = now
+                    prev_screen_snapshot = None
+                    has_rendered_photo = False
+                    if video_proc:
+                        stop_video(video_proc)
+                        video_proc = None
+                    show_toast(u"Fin du moment - Retour au diaporama", (56, 189, 248))
+                elif current_mode == MODE_CYCLE:
+                    internal_mode = (internal_mode % 3) + 1
+                    all_files = get_files_for_mode(internal_mode)
+                    indices = list(range(len(all_files)))
+                    random.shuffle(indices)
+                    current_idx_ptr = 0
+                    current_step = 1
+                    nav_history = []
+                    nav_forward_stack = []
+                    modern_scene = None
+                    need_load = True
+                    last_cycle_time = now
+                    prev_screen_snapshot = None
+                    has_rendered_photo = False
+                    if video_proc:
+                        stop_video(video_proc)
+                        video_proc = None
 
             # --- 2. ENTRÉES BOUTONS (/dev/input/event*) ---
             top_button_triggered = False
@@ -1339,11 +1592,17 @@ def run_slideshow(enable_animation=True):
             if not running:
                 break
 
-            # Toute action sur les boutons ou le joystick prolonge la temporisation de 1 min de la phase en cours
+            # Toute action sur les boutons ou le joystick prolonge la temporisation de la phase en cours
             if top_button_triggered or vert_actions or horiz_actions:
                 last_cycle_time = now
 
-            # Traitement de l'appui bouton du dessus (1 clic = Infos / 2 clics = Menu)
+            curr_is_photo = is_photo_item_at(internal_mode, all_files, indices, current_idx_ptr)
+            metas_for_actions = modern_scene["metas"] if (curr_is_photo and active_render_style != STYLE_CLASSIC and modern_scene) else [meta_data]
+            level1_actions = get_level1_actions(internal_mode, curr_is_photo, metas_for_actions, video_meta)
+            if info_selected_action >= len(level1_actions):
+                info_selected_action = 0
+
+            # Traitement de l'appui bouton du dessus (1 clic = Infos & Actions 1er niveau / 2 clics = Menu Réglages)
             if top_button_triggered:
                 if now - last_top_btn_time >= 0.08:
                     is_double_click = (now - last_top_btn_time) < DOUBLE_CLICK_BTN_THRESHOLD
@@ -1361,16 +1620,79 @@ def run_slideshow(enable_animation=True):
                     else:
                         if overlay_level == 0:
                             overlay_level = 1
+                            info_selected_action = 0
                             overlay_deadline = now + INFO_DURATION
                             log_debug("OPEN INFO OVERLAY (overlay_level=1)")
                             if video_proc:
                                 stop_video(video_proc)
                                 video_proc = None
+                        elif overlay_level == 1:
+                            # Exécute l'action sélectionnée dans le menu de 1er niveau
+                            chosen_act = level1_actions[info_selected_action] if level1_actions else {"id": "close"}
+                            act_id = chosen_act.get("id", "close")
+                            log_debug("EXECUTE LEVEL 1 ACTION id=%s" % act_id)
+
+                            overlay_level = 0
+                            if act_id == "focus":
+                                src_p = chosen_act.get("source_path", u"")
+                                cid = send_pc_command("focus", src_p)
+                                if cid:
+                                    pending_cmd_id = cid
+                                    pending_cmd_action = "focus"
+                                    pending_cmd_start = now
+                                    pending_cmd_ready_handled = False
+                                    pending_cmd_unack_warned = False
+                                    last_cmd_poll = 0.0
+                                    last_cmd_msg = u""
+                                    show_toast(u"Demande envoyée au PC : Voir ce moment...", (52, 211, 153), duration=3.5)
+                                else:
+                                    show_toast(u"Erreur d'envoi de la commande au PC", (248, 113, 113), duration=3.0)
+                                if not curr_is_photo and video_proc is None:
+                                    need_load = True
+                            elif act_id == "new_draw":
+                                cid = send_pc_command("new_draw")
+                                if cid:
+                                    pending_cmd_id = cid
+                                    pending_cmd_action = "new_draw"
+                                    pending_cmd_start = now
+                                    pending_cmd_ready_handled = False
+                                    pending_cmd_unack_warned = False
+                                    last_cmd_poll = 0.0
+                                    last_cmd_msg = u""
+                                    show_toast(u"Demande envoyée au PC : Nouveau tirage...", (251, 191, 36), duration=3.5)
+                                else:
+                                    show_toast(u"Erreur d'envoi de la commande au PC", (248, 113, 113), duration=3.0)
+                                if not curr_is_photo and video_proc is None:
+                                    need_load = True
+                            elif act_id == "exit_focus":
+                                if saved_before_focus:
+                                    internal_mode, all_files, indices, current_idx_ptr = saved_before_focus
+                                    saved_before_focus = None
+                                else:
+                                    internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
+                                    all_files = get_files_for_mode(internal_mode)
+                                    indices = list(range(len(all_files)))
+                                    random.shuffle(indices)
+                                    current_idx_ptr = 0
+                                current_step = 1
+                                nav_history = []
+                                nav_forward_stack = []
+                                modern_scene = None
+                                prev_screen_snapshot = None
+                                has_rendered_photo = False
+                                need_load = True
+                                manual_skip = True
+                                if video_proc:
+                                    stop_video(video_proc)
+                                    video_proc = None
+                                show_toast(u"Retour au diaporama", (56, 189, 248))
+                            else:
+                                if not curr_is_photo and video_proc is None:
+                                    need_load = True
                         else:
-                            was_video = (internal_mode != MODE_PHOTOS)
                             overlay_level = 0
                             log_debug("CLOSE OVERLAY (overlay_level=0)")
-                            if was_video and video_proc is None:
+                            if not curr_is_photo and video_proc is None:
                                 need_load = True
 
             # Traitement des actions verticales (Haut / Bas)
@@ -1383,7 +1705,7 @@ def run_slideshow(enable_animation=True):
                     # Hors menu (écran propre 0 ou Infos 1) : Raccourci direct Style (sur photo) ou Son (sur vidéo)
                     if overlay_level == 1:
                         overlay_deadline = now + INFO_DURATION
-                    if internal_mode == MODE_PHOTOS:
+                    if curr_is_photo:
                         photo_style = shift_photo_style(photo_style, vdir)
                         settings["photo_style"] = photo_style
                         save_settings(settings)
@@ -1413,6 +1735,7 @@ def run_slideshow(enable_animation=True):
                     overlay_deadline = now + MENU_DURATION
                     if menu_selected_row == 0:
                         # Mode d'affichage (1..4)
+                        saved_before_focus = None
                         current_mode = ((current_mode - 1 + steer) % 4) + 1
                         internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
                         all_files = get_files_for_mode(internal_mode)
@@ -1440,7 +1763,7 @@ def run_slideshow(enable_animation=True):
                         photo_style = shift_photo_style(photo_style, steer)
                         settings["photo_style"] = photo_style
                         save_settings(settings)
-                        if internal_mode == MODE_PHOTOS:
+                        if curr_is_photo:
                             need_load = True
                             force_reload_same = True
                             manual_skip = True
@@ -1461,33 +1784,50 @@ def run_slideshow(enable_animation=True):
                         show_toast(u"Appuyez sur le bouton à tester...", (251, 191, 36))
                     elif menu_selected_row == 5:
                         # Fermer le menu
-                        was_video = (internal_mode != MODE_PHOTOS)
                         overlay_level = 0
                         learning_button_timer = 0.0
-                        if was_video and video_proc is None:
+                        if not curr_is_photo and video_proc is None:
                             need_load = True
+                elif overlay_level == 1:
+                    # Navigation Gauche/Droite entre les boutons d'action du menu de 1er niveau
+                    overlay_deadline = now + INFO_DURATION
+                    if level1_actions:
+                        info_selected_action = (info_selected_action + steer + len(level1_actions)) % len(level1_actions)
                 else:
-                    # Hors menu (écran propre 0 ou Infos 1)
-                    if overlay_level == 1:
-                        overlay_deadline = now + INFO_DURATION
-
+                    # Écran propre (overlay_level == 0)
                     is_double_tap = (
-                        current_mode == MODE_CYCLE
+                        (current_mode == MODE_CYCLE or internal_mode == MODE_FOCUS)
                         and is_fresh_tap
                         and last_tap_dir == steer
                         and ((now - last_tap_start_time) < 0.65 or (now - last_tap_done_time) < 0.42)
                     )
 
                     if is_double_tap:
-                        # DOUBLE-COUP JOYSTICK RAPIDE -> Saut de phase en Cycle Auto (Photos -> Vidéos Perso -> Jeux Rétro)
                         last_tap_dir = 0
                         last_tap_start_time = 0.0
                         last_tap_done_time = 0.0
-                        internal_mode = ((internal_mode - 1 + steer) % 3) + 1
-                        all_files = get_files_for_mode(internal_mode)
-                        indices = list(range(len(all_files)))
-                        random.shuffle(indices)
-                        current_idx_ptr = 0
+                        if internal_mode == MODE_FOCUS:
+                            if saved_before_focus:
+                                internal_mode, all_files, indices, current_idx_ptr = saved_before_focus
+                                saved_before_focus = None
+                            else:
+                                internal_mode = current_mode if current_mode != MODE_CYCLE else MODE_PHOTOS
+                                all_files = get_files_for_mode(internal_mode)
+                                indices = list(range(len(all_files)))
+                                random.shuffle(indices)
+                                current_idx_ptr = 0
+                            show_toast(u"Retour au diaporama", (56, 189, 248))
+                        else:
+                            internal_mode = ((internal_mode - 1 + steer) % 3) + 1
+                            all_files = get_files_for_mode(internal_mode)
+                            indices = list(range(len(all_files)))
+                            random.shuffle(indices)
+                            current_idx_ptr = 0
+                            phase_name = MODE_NAMES.get(internal_mode, u"")
+                            if steer > 0:
+                                show_toast(u">> Suivant (%s)" % phase_name, (251, 191, 36))
+                            else:
+                                show_toast(u"<< Précédent (%s)" % phase_name, (251, 191, 36))
                         current_step = 1
                         nav_history = []
                         nav_forward_stack = []
@@ -1502,11 +1842,6 @@ def run_slideshow(enable_animation=True):
                             stop_video(video_proc)
                             video_proc = None
                         log_debug("DOUBLE TAP -> switch internal_mode=%d" % internal_mode)
-                        phase_name = MODE_NAMES.get(internal_mode, u"")
-                        if steer > 0:
-                            show_toast(u">> Suivant (%s)" % phase_name, (251, 191, 36))
-                        else:
-                            show_toast(u"<< Précédent (%s)" % phase_name, (251, 191, 36))
                         draw_screen_feedback()
                     else:
                         # Navigation immédiate (0 ms d'attente) vers le média suivant / précédent
@@ -1555,7 +1890,8 @@ def run_slideshow(enable_animation=True):
                         forced_style = None
                     show_toast(u"< Précédent", (56, 189, 248))
 
-                if cached is not None and internal_mode == MODE_PHOTOS:
+                next_is_photo = is_photo_item_at(internal_mode, all_files, indices, current_idx_ptr)
+                if cached is not None and next_is_photo:
                     modern_scene = cached
                     prev_screen_snapshot = None
                     alpha = 255
@@ -1575,6 +1911,7 @@ def run_slideshow(enable_animation=True):
                 nav_steer = None
 
             show_info = (overlay_level != 0)
+            curr_is_photo = is_photo_item_at(internal_mode, all_files, indices, current_idx_ptr)
 
             # --- 4. LOGIQUE CHARGEMENT ---
             if video_proc:
@@ -1602,11 +1939,18 @@ def run_slideshow(enable_animation=True):
                     continue
 
                 file_path = all_files[indices[current_idx_ptr]]
+                curr_is_photo = is_photo_item_at(internal_mode, all_files, indices, current_idx_ptr)
 
-                if internal_mode == MODE_PHOTOS:
+                if curr_is_photo:
                     try:
-                        # Choix du style de rendu pour cette photo
-                        if forced_style is not None:
+                        # Choix du style de rendu pour cette photo (en Mode Focus, on privilégie un affichage solo chronologique)
+                        if internal_mode == MODE_FOCUS:
+                            if photo_style in (STYLE_MAGAZINE, STYLE_ARCADE, STYLE_CLASSIC):
+                                active_render_style = photo_style
+                            else:
+                                active_render_style = STYLE_MODERN
+                            forced_style = None
+                        elif forced_style is not None:
                             active_render_style = forced_style
                             forced_style = None
                         elif photo_style == STYLE_AUTO_ART:
@@ -1626,6 +1970,9 @@ def run_slideshow(enable_animation=True):
                         img1_w, img1_h = img1.get_size()
                         is_vertical1 = img1_h > img1_w * 1.02
                         meta1 = get_sidecar_data(file_path)
+                        if internal_mode == MODE_FOCUS:
+                            raw_lbl = meta1.get("label", u"") or u"Moment"
+                            meta1["label"] = u"[MOMENT %d/%d] %s" % (current_idx_ptr + 1, len(all_files), raw_lbl)
                         current_step = 1
                         border_px = max(3, int(min(sw, sh) * 0.004))
 
@@ -1820,7 +2167,7 @@ def run_slideshow(enable_animation=True):
                         # STYLE 3 : MAGAZINE PLEIN ÉCRAN (100% SANS BORDURES & TYPOGRAPHIE XXL)
                         # =========================================================================
                         elif active_render_style == STYLE_MAGAZINE:
-                            if is_vertical1 and len(indices) > 1:
+                            if is_vertical1 and len(indices) > 1 and internal_mode != MODE_FOCUS:
                                 off2, img2, path2, meta2 = find_partner_photo(current_idx_ptr, want_vertical=True)
                             else:
                                 off2, img2, path2, meta2 = (None, None, None, None)
@@ -1895,7 +2242,7 @@ def run_slideshow(enable_animation=True):
                             duo_path2 = None
                             meta2 = None
 
-                            if is_vertical1 and len(indices) > 1 and not force_reload_same and random.random() < DUO_PORTRAIT_PROBABILITY:
+                            if is_vertical1 and len(indices) > 1 and internal_mode != MODE_FOCUS and not force_reload_same and random.random() < DUO_PORTRAIT_PROBABILITY:
                                 off2, duo_img2, duo_path2, meta2 = find_partner_photo(current_idx_ptr, want_vertical=True)
                                 if duo_img2 is not None:
                                     current_step = 2
@@ -2132,7 +2479,7 @@ def run_slideshow(enable_animation=True):
                         need_load = False
                         manual_skip = False
 
-            if not need_load and not show_info and internal_mode == MODE_PHOTOS and now - last_switch > display_time:
+            if not need_load and not show_info and curr_is_photo and now - last_switch > display_time:
                 nav_history.append({
                     "ptr": current_idx_ptr,
                     "step": current_step,
@@ -2146,7 +2493,7 @@ def run_slideshow(enable_animation=True):
                 need_load = True
 
             # --- 5. AFFICHAGE ---
-            if internal_mode == MODE_PHOTOS and not need_load:
+            if curr_is_photo and not need_load:
                 progress = min(1.0, (now - last_switch) / display_time)
 
                 if active_render_style != STYLE_CLASSIC and modern_scene is not None:
@@ -2278,9 +2625,9 @@ def run_slideshow(enable_animation=True):
 
                     has_rendered_photo = True
 
-            elif internal_mode != MODE_PHOTOS and overlay_level != 0:
+            elif not curr_is_photo and overlay_level != 0:
                 draw_video_backdrop(screen, sw, sh, internal_mode, video_meta, is_muted, font_main, font_small, font_regular)
-            elif internal_mode != MODE_PHOTOS and overlay_level == 0 and not need_load:
+            elif not curr_is_photo and overlay_level == 0 and not need_load:
                 # Redessine la barre inférieure de 60px (sous omxplayer) pour afficher/effacer le toast de son ou de cycle
                 pygame.draw.rect(screen, (0, 0, 0), (0, sh - 60, sw, 60))
                 if internal_mode == MODE_VIDEOS_GAMES:
@@ -2301,13 +2648,15 @@ def run_slideshow(enable_animation=True):
 
             # --- 6. SUPERPOSITION INFOS/TOOLTIPS (NIVEAU 1), MENU (NIVEAU 2) OU TOAST EN BAS (NIVEAU 0) ---
             if overlay_level == 1:
-                metas_to_show = modern_scene["metas"] if (internal_mode == MODE_PHOTOS and active_render_style != STYLE_CLASSIC and modern_scene) else [meta_data]
+                metas_to_show = modern_scene["metas"] if (curr_is_photo and active_render_style != STYLE_CLASSIC and modern_scene) else [meta_data]
                 idx_num = (indices[current_idx_ptr] + 1) if indices else 1
                 total_cnt = len(all_files) if all_files else 1
+                actions_l1 = get_level1_actions(internal_mode, curr_is_photo, metas_to_show, video_meta)
                 draw_info_overlay(
                     screen, sw, sh, current_mode, internal_mode, photo_style, active_render_style, is_muted,
                     metas_to_show, video_meta, idx_num, total_cnt, overlay_deadline - now,
-                    font_main, font_small, font_regular, font_tiny
+                    font_main, font_small, font_regular, font_tiny,
+                    is_photo_item=curr_is_photo, actions=actions_l1, selected_action_idx=info_selected_action
                 )
             elif overlay_level == 2:
                 draw_settings_menu(

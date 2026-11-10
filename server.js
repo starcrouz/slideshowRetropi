@@ -113,15 +113,34 @@ app.get('/api/history', (req, res) => {
     }
 });
 
-// API: Lancer un tirage
-app.post('/api/run', (req, res) => {
-    if (activeProcess || isSelectionRunning()) {
-        return res.status(400).json({ error: 'Un tirage est déjà en cours de traitement (via le serveur ou la tâche planifiée)' });
-    }
+function stopRunningSelectionSilent() {
+    try {
+        if (activeProcess) {
+            if (process.platform === 'win32' && activeProcess.pid) {
+                try { execSync(`taskkill /PID ${activeProcess.pid} /T /F`, { stdio: 'ignore' }); } catch (e) {}
+            } else {
+                activeProcess.kill('SIGTERM');
+            }
+            activeProcess = null;
+        }
+        if (fs.existsSync(lockFilePath)) {
+            const pidStr = fs.readFileSync(lockFilePath, 'utf8').trim();
+            const pid = parseInt(pidStr, 10);
+            if (!isNaN(pid)) {
+                try {
+                    if (process.platform === 'win32') {
+                        execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore' });
+                    } else {
+                        process.kill(pid, 'SIGTERM');
+                    }
+                } catch (e) {}
+            }
+            try { fs.unlinkSync(lockFilePath); } catch (e) {}
+        }
+    } catch (e) {}
+}
 
-    const videosOnly = Boolean(req.body && req.body.videosOnly);
-    const args = videosOnly ? ['index.js', '--videos-only'] : ['index.js'];
-
+function launchIndexProcess(args) {
     logBuffer = [];
     activeProcess = spawn('node', args, { cwd: __dirname });
 
@@ -140,8 +159,33 @@ app.post('/api/run', (req, res) => {
         sendLogsToClients(msg);
         activeProcess = null;
     });
+}
+
+// API: Lancer un tirage
+app.post('/api/run', (req, res) => {
+    if (activeProcess || isSelectionRunning()) {
+        return res.status(400).json({ error: 'Un tirage est déjà en cours de traitement (via le serveur ou la tâche planifiée)' });
+    }
+
+    const videosOnly = Boolean(req.body && req.body.videosOnly);
+    const args = videosOnly ? ['index.js', '--videos-only'] : ['index.js'];
+    launchIndexProcess(args);
 
     res.json({ message: 'Tirage démarré' });
+});
+
+// API: Lancer un album éphémère "Voir ce moment" (Focus)
+app.post('/api/focus', (req, res) => {
+    const sourcePath = req.body && req.body.sourcePath;
+    if (!sourcePath) {
+        return res.status(400).json({ error: 'Chemin sourcePath manquant' });
+    }
+    if (activeProcess || isSelectionRunning()) {
+        stopRunningSelectionSilent();
+    }
+    const cmdId = `web_focus_${Date.now()}`;
+    launchIndexProcess(['index.js', '--focus', sourcePath, '--cmd-id', cmdId]);
+    res.json({ message: 'Recherche du moment démarrée', cmdId });
 });
 
 // API: Interrompre un tirage en cours
@@ -372,9 +416,64 @@ app.get('/api/video', (req, res) => {
 });
 
 
+// --- SURVEILLANCE DES COMMANDES DU BARTOP (command.json) ---
+let lastProcessedCommandId = null;
+
+function initLastCommandId() {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        if (!fs.existsSync(configPath)) return;
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const cmdFile = path.join(path.dirname(cfg.DEST_DIR), 'command.json');
+        if (fs.existsSync(cmdFile)) {
+            const cmd = JSON.parse(fs.readFileSync(cmdFile, 'utf8'));
+            if (cmd && cmd.id) {
+                lastProcessedCommandId = cmd.id;
+            }
+        }
+    } catch (e) {}
+}
+
+function pollBartopCommands() {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        if (!fs.existsSync(configPath)) return;
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const bartopDir = path.dirname(cfg.DEST_DIR);
+        const cmdFile = path.join(bartopDir, 'command.json');
+        if (!fs.existsSync(cmdFile)) return;
+
+        const raw = fs.readFileSync(cmdFile, 'utf8').trim();
+        if (!raw) return;
+        const cmd = JSON.parse(raw);
+        if (!cmd || !cmd.id || cmd.id === lastProcessedCommandId) return;
+
+        lastProcessedCommandId = cmd.id;
+        console.log(`\n[Commande Bartop reçue] Action="${cmd.action}" (id=${cmd.id})`);
+
+        if (cmd.action === 'focus' && cmd.source_path) {
+            if (activeProcess || isSelectionRunning()) {
+                stopRunningSelectionSilent();
+            }
+            launchIndexProcess(['index.js', '--focus', cmd.source_path, '--cmd-id', String(cmd.id)]);
+        } else if (cmd.action === 'new_draw') {
+            if (activeProcess || isSelectionRunning()) {
+                stopRunningSelectionSilent();
+            }
+            launchIndexProcess(['index.js', '--cmd-id', String(cmd.id)]);
+        }
+    } catch (e) {
+        // Ignorer les erreurs réseau temporaires ou JSON en cours d'écriture
+    }
+}
+
+initLastCommandId();
+setInterval(pollBartopCommands, 2000);
+
 app.listen(PORT, () => {
     console.log(`==================================================`);
     console.log(` Serveur Dashboard Bartop démarré sur :`);
     console.log(` http://localhost:${PORT}`);
+    console.log(` (Écoute active des commandes Bartop toutes les 2s)`);
     console.log(`==================================================`);
 });

@@ -63,6 +63,7 @@ function getBestFolderLabel(filePath, config) {
 async function getPhotoMetadata(photoPath, config) {
     let dateStr = "";
     let fullDateStr = "";
+    let timestampMs = null;
     let gpsStatus = "Aucun";
     let coords = null;
     let orientation = null;
@@ -95,9 +96,11 @@ async function getPhotoMetadata(photoPath, config) {
             }
 
             // 2. Extract Date
-            if (result.DateTimeOriginal) {
-                const date = new Date(result.DateTimeOriginal);
+            const rawDate = result.DateTimeOriginal || result.CreateDate || result.ModifyDate;
+            if (rawDate) {
+                const date = new Date(rawDate);
                 if (!isNaN(date.getTime())) {
+                    timestampMs = date.getTime();
                     dateStr = `${MONTHS_FR[date.getMonth()]} ${date.getFullYear()}`;
                     // Full date: "21 Février 2026 14:30"
                     const day = String(date.getDate()).padStart(2, '0');
@@ -142,6 +145,7 @@ async function getPhotoMetadata(photoPath, config) {
     return {
         dateStr,
         fullDateStr,
+        timestampMs,
         coords,
         folderLabel,
         gpsStatus,

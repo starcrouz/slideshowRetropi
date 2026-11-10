@@ -68,8 +68,21 @@ process.on('SIGTERM', () => {
     process.exit(2);
 });
 
-const { getBestLocation } = require('./geo');
+const { getBestLocation, getDistance } = require('./geo');
 const { getPhotoMetadata, getBestFolderLabel, capitalize, extractDateFromPath } = require('./metadata');
+
+function writeCommandStatus(statusObj) {
+    try {
+        const statusPath = path.join(path.dirname(config.DEST_DIR), 'command_status.json');
+        const payload = {
+            ...statusObj,
+            timestamp: Date.now()
+        };
+        fs.writeFileSync(statusPath, JSON.stringify(payload, null, 2), 'utf8');
+    } catch (e) {
+        // Ignorer si partage réseau momentanément indisponible
+    }
+}
 
 function getCachePath(filePath) {
     const cacheDir = path.join(__dirname, '.cache');
@@ -362,7 +375,7 @@ function probeVideo(filePath) {
             [
                 '-v', 'error',
                 '-select_streams', 'v:0',
-                '-show_entries', 'stream=codec_name,width,height,pix_fmt,duration:format=duration',
+                '-show_entries', 'stream=codec_name,width,height,pix_fmt,duration:format=duration:format_tags=creation_time',
                 '-of', 'json',
                 filePath
             ],
@@ -386,10 +399,19 @@ function probeVideo(filePath) {
         const secs = Math.round(durationSec % 60);
         const durationStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
+        let creationTimestampMs = null;
+        if (data.format && data.format.tags && data.format.tags.creation_time) {
+            const parsed = new Date(data.format.tags.creation_time);
+            if (!isNaN(parsed.getTime())) {
+                creationTimestampMs = parsed.getTime();
+            }
+        }
+
         return {
             valid: true,
             durationSec,
             durationStr,
+            creationTimestampMs,
             codec: stream.codec_name || "inconnu",
             width: stream.width || 0,
             height: stream.height || 0,
@@ -676,13 +698,518 @@ async function processVideos(allVideoFiles, onProgress) {
     return selectedVideosResult;
 }
 
+function extractSeqNumber(filePath) {
+    const base = path.basename(filePath, path.extname(filePath));
+    // Exclure les formats date pure YYYYMMDD_HHMMSS
+    if (/^\d{8}[_-]\d{6}/.test(base)) {
+        return null;
+    }
+    const matches = base.match(/(\d{3,6})/g);
+    if (!matches || matches.length === 0) return null;
+    return parseInt(matches[matches.length - 1], 10);
+}
+
+function extractTimestampFromFilename(filePath) {
+    const base = path.basename(filePath, path.extname(filePath));
+    // Format YYYYMMDD_HHMMSS ou IMG_YYYYMMDD_HHMMSS
+    const m1 = base.match(/((?:19|20)\d{2})(\d{2})(\d{2})[_-](\d{2})(\d{2})(\d{2})/);
+    if (m1) {
+        const d = new Date(
+            parseInt(m1[1], 10),
+            parseInt(m1[2], 10) - 1,
+            parseInt(m1[3], 10),
+            parseInt(m1[4], 10),
+            parseInt(m1[5], 10),
+            parseInt(m1[6], 10)
+        );
+        if (!isNaN(d.getTime())) return d.getTime();
+    }
+    // Format YYYY-MM-DD HH.MM.SS ou similaire
+    const m2 = base.match(/((?:19|20)\d{2})[-.](\d{2})[-.](\d{2})[\s_-]+(\d{2})[.:-](\d{2})[.:-](\d{2})/);
+    if (m2) {
+        const d = new Date(
+            parseInt(m2[1], 10),
+            parseInt(m2[2], 10) - 1,
+            parseInt(m2[3], 10),
+            parseInt(m2[4], 10),
+            parseInt(m2[5], 10),
+            parseInt(m2[6], 10)
+        );
+        if (!isNaN(d.getTime())) return d.getTime();
+    }
+    return null;
+}
+
+function isCatchAllDumpFolder(folderPath, totalFilesCount) {
+    const folderName = path.basename(folderPath).toLowerCase();
+    const dumpRegex = /(iphone|ipad|android|samsung|pixel|huawei|xiaomi|ann[eé]e|dcim|camera|appareil|pellicule|export|vrac|carte|backup|sauvegarde|toutes|divers|tri\b)/i;
+    if (dumpRegex.test(folderName)) return true;
+    if (/^(photos?|images?|videos?|m[eé]dias?)(\s|$|[-_])/i.test(folderName)) return true;
+    if (totalFilesCount > 120) return true;
+    return false;
+}
+
+async function runFocusMoment(targetSourcePath, cmdId = null) {
+    const effectiveCmdId = cmdId || `focus_${Date.now()}`;
+    console.log(`\n=== [Focus Moment] Cible : ${targetSourcePath} (cmdId: ${effectiveCmdId}) ===`);
+
+    if (!acquireLock()) {
+        writeCommandStatus({
+            id: effectiveCmdId,
+            action: 'focus',
+            state: 'error',
+            ready: false,
+            message: 'Un tirage PC est deja en cours, patientez...'
+        });
+        return;
+    }
+
+    try {
+        if (!targetSourcePath || !fs.existsSync(targetSourcePath)) {
+            console.error(`[Focus Moment] Fichier source introuvable : ${targetSourcePath}`);
+            writeCommandStatus({
+                id: effectiveCmdId,
+                action: 'focus',
+                state: 'error',
+                ready: false,
+                message: 'Fichier original introuvable sur le PC'
+            });
+            return;
+        }
+
+        const parentDir = path.dirname(targetSourcePath);
+        const photoExts = new Set(['.jpg', '.jpeg', '.heic']);
+        const videoExts = new Set(['.mp4', '.mov', '.avi', '.mkv']);
+        const targetExt = path.extname(targetSourcePath).toLowerCase();
+        const isTargetPhoto = photoExts.has(targetExt);
+        const isTargetVideo = videoExts.has(targetExt);
+
+        writeCommandStatus({
+            id: effectiveCmdId,
+            action: 'focus',
+            state: 'searching',
+            ready: false,
+            message: 'Recherche des photos et videos de ce moment...'
+        });
+
+        // 1. Extraire l'empreinte spatio-temporelle du média cible
+        let targetTimestampMs = extractTimestampFromFilename(targetSourcePath);
+        let targetCoords = null;
+        let momentLabel = '';
+        let targetMeta = null;
+        let targetStat = null;
+        try {
+            targetStat = fs.statSync(targetSourcePath);
+        } catch (e) {}
+
+        if (isTargetPhoto) {
+            targetMeta = await getPhotoMetadata(targetSourcePath, config);
+            if (targetMeta) {
+                if (targetMeta.timestampMs) targetTimestampMs = targetMeta.timestampMs;
+                if (targetMeta.coords) targetCoords = targetMeta.coords;
+                momentLabel = computeImageLabel(targetMeta);
+            }
+        } else if (isTargetVideo) {
+            const vProbe = probeVideo(targetSourcePath);
+            if (vProbe && vProbe.creationTimestampMs) {
+                targetTimestampMs = vProbe.creationTimestampMs;
+            }
+            const fl = getBestFolderLabel(targetSourcePath, config);
+            const dt = extractDateFromPath(targetSourcePath, config);
+            if (fl && dt) momentLabel = `${capitalize(fl)} - ${dt}`;
+            else if (fl) momentLabel = capitalize(fl);
+            else if (dt) momentLabel = dt;
+        }
+
+        if (!momentLabel) {
+            momentLabel = getBestFolderLabel(targetSourcePath, config) || extractDateFromPath(targetSourcePath, config) || 'Ce moment';
+        }
+
+        const targetSeq = extractSeqNumber(targetSourcePath);
+        const targetMtimeMs = targetStat ? targetStat.mtimeMs : Date.now();
+
+        // 2. Lister les fichiers frères du dossier parent
+        let dirEntries = [];
+        try {
+            dirEntries = fs.readdirSync(parentDir);
+        } catch (e) {
+            console.error(`[Focus Moment] Impossible de lire le dossier ${parentDir}: ${e.message}`);
+        }
+
+        const rawPhotos = [];
+        const rawVideos = [];
+        for (const name of dirEntries) {
+            const fullP = path.join(parentDir, name);
+            const ext = path.extname(name).toLowerCase();
+            if (config.ENABLE_QUALITY_FILTERS && Array.isArray(config.FILTER_FORBIDDEN_KEYWORDS)) {
+                const lower = fullP.toLowerCase();
+                if (config.FILTER_FORBIDDEN_KEYWORDS.some(kw => lower.includes(kw.toLowerCase()))) {
+                    continue;
+                }
+            }
+            if (photoExts.has(ext)) rawPhotos.push(fullP);
+            else if (videoExts.has(ext)) rawVideos.push(fullP);
+        }
+
+        const totalInFolder = rawPhotos.length + rawVideos.length;
+        const isDump = isCatchAllDumpFolder(parentDir, totalInFolder);
+        console.log(`[Focus Moment] Dossier "${path.basename(parentDir)}" (${rawPhotos.length} photos, ${rawVideos.length} vidéos) -> Type: ${isDump ? 'VRAC / DUMP' : 'THÉMATIQUE'}`);
+        console.log(`[Focus Moment] Cible timestamp=${targetTimestampMs ? new Date(targetTimestampMs).toISOString() : 'N/A'}, seq=${targetSeq}, GPS=${targetCoords ? `${targetCoords.lat.toFixed(3)},${targetCoords.lon.toFixed(3)}` : 'N/A'}`);
+
+        // 3. Pré-classement ultra-rapide des candidats (pour éviter de parser 5000 EXIF dans un dossier vrac iPhone)
+        const scoreCandidateFast = (filePath) => {
+            if (path.resolve(filePath) === path.resolve(targetSourcePath)) return -1;
+            const seq = extractSeqNumber(filePath);
+            const fnTs = extractTimestampFromFilename(filePath);
+            let mtimeDistHours = 999999;
+            try {
+                const st = fs.statSync(filePath);
+                const refTs = targetTimestampMs || targetMtimeMs;
+                mtimeDistHours = Math.abs(st.mtimeMs - refTs) / (3600 * 1000);
+            } catch (e) {}
+
+            let score = 100000;
+            if (targetTimestampMs && fnTs) {
+                score = Math.abs(fnTs - targetTimestampMs) / (60 * 1000); // minutes d'écart
+            } else if (targetSeq !== null && seq !== null) {
+                score = Math.abs(seq - targetSeq) * 2; // proximité numéro IMG_xxxx
+            } else {
+                score = mtimeDistHours * 10;
+            }
+            return score;
+        };
+
+        const preRankedPhotos = rawPhotos
+            .map(p => ({ path: p, fastScore: scoreCandidateFast(p) }))
+            .sort((a, b) => a.fastScore - b.fastScore)
+            .slice(0, isDump ? 140 : 200);
+
+        const preRankedVideos = rawVideos
+            .map(v => ({ path: v, fastScore: scoreCandidateFast(v) }))
+            .sort((a, b) => a.fastScore - b.fastScore)
+            .slice(0, isDump ? 20 : 30);
+
+        // 4. Analyse EXIF des meilleures photos candidates
+        const tier1Photos = []; // Même moment / journée (<= 36h ou GPS proche <= 72h)
+        const tier2Photos = []; // Même week-end / séjour (<= 96h ou GPS proche <= 10j)
+        const tier3Photos = []; // Même dossier thématique ou séquence très proche
+        let targetCandidateObj = null;
+
+        for (const cand of preRankedPhotos) {
+            const isSelf = path.resolve(cand.path) === path.resolve(targetSourcePath);
+            const meta = (isSelf && targetMeta) ? targetMeta : await getPhotoMetadata(cand.path, config);
+            const candTs = (meta && meta.timestampMs) || extractTimestampFromFilename(cand.path);
+            const candCoords = meta ? meta.coords : null;
+            const candSeq = extractSeqNumber(cand.path);
+
+            let diffHours = null;
+            if (targetTimestampMs && candTs) {
+                diffHours = Math.abs(candTs - targetTimestampMs) / (3600 * 1000);
+            }
+
+            let distKm = null;
+            if (targetCoords && candCoords) {
+                distKm = getDistance(targetCoords.lat, targetCoords.lon, candCoords.lat, candCoords.lon);
+            }
+
+            const itemObj = {
+                type: 'photo',
+                path: cand.path,
+                meta,
+                timestampMs: candTs || targetTimestampMs || targetMtimeMs,
+                diffHours: diffHours !== null ? diffHours : 9999,
+                distKm,
+                fastScore: cand.fastScore,
+                isSelf
+            };
+
+            if (isSelf) {
+                targetCandidateObj = itemObj;
+                continue;
+            }
+
+            if (diffHours !== null) {
+                if (diffHours <= 36 || (distKm !== null && distKm <= 20 && diffHours <= 72)) {
+                    tier1Photos.push(itemObj);
+                } else if (diffHours <= 96 || (distKm !== null && distKm <= 25 && diffHours <= 240)) {
+                    tier2Photos.push(itemObj);
+                } else if (!isDump) {
+                    tier3Photos.push(itemObj);
+                }
+            } else {
+                // Pas de date EXIF disponible : on utilise la proximité de numéro de séquence ou le dossier thématique
+                if (!isDump) {
+                    tier3Photos.push(itemObj);
+                } else if (targetSeq !== null && candSeq !== null && Math.abs(candSeq - targetSeq) <= 35) {
+                    tier2Photos.push(itemObj);
+                }
+            }
+        }
+
+        tier1Photos.sort((a, b) => a.diffHours - b.diffHours || a.fastScore - b.fastScore);
+        tier2Photos.sort((a, b) => a.diffHours - b.diffHours || a.fastScore - b.fastScore);
+        tier3Photos.sort((a, b) => a.fastScore - b.fastScore);
+
+        const MAX_FOCUS_PHOTOS = 18;
+        const chosenPhotos = [];
+        if (targetCandidateObj) {
+            chosenPhotos.push(targetCandidateObj);
+        }
+
+        // Fonction d'échantillonnage harmonieux si une tranche contient beaucoup de photos (évite 18 rafales de la même seconde)
+        const pickSpread = (arr, maxCount) => {
+            if (arr.length <= maxCount) return arr;
+            // Toujours garder les 4 plus proches immédiatement, puis répartir sur le reste du moment
+            const immediate = arr.slice(0, Math.min(4, maxCount));
+            const rest = arr.slice(immediate.length);
+            const needed = maxCount - immediate.length;
+            const picked = [...immediate];
+            const step = rest.length / needed;
+            for (let i = 0; i < needed; i++) {
+                picked.push(rest[Math.min(rest.length - 1, Math.floor(i * step))]);
+            }
+            return picked;
+        };
+
+        const need1 = MAX_FOCUS_PHOTOS - chosenPhotos.length;
+        chosenPhotos.push(...pickSpread(tier1Photos, need1));
+
+        if (chosenPhotos.length < MAX_FOCUS_PHOTOS && tier2Photos.length > 0) {
+            const need2 = MAX_FOCUS_PHOTOS - chosenPhotos.length;
+            chosenPhotos.push(...pickSpread(tier2Photos, need2));
+        }
+
+        if (chosenPhotos.length < MAX_FOCUS_PHOTOS && tier3Photos.length > 0) {
+            const need3 = MAX_FOCUS_PHOTOS - chosenPhotos.length;
+            chosenPhotos.push(...pickSpread(tier3Photos, need3));
+        }
+
+        // 5. Sélection des vidéos associées à ce moment (max 3 vidéos)
+        const chosenVideos = [];
+        const MAX_FOCUS_VIDEOS = 3;
+        const minDurationSec = typeof config.VIDEO_MIN_DURATION_SEC === 'number' ? config.VIDEO_MIN_DURATION_SEC : 4;
+
+        for (const vCand of preRankedVideos) {
+            if (chosenVideos.length >= MAX_FOCUS_VIDEOS) break;
+            const isSelf = path.resolve(vCand.path) === path.resolve(targetSourcePath);
+            try {
+                const st = fs.statSync(vCand.path);
+                if (!isSelf && (st.size < 512 * 1024 || st.size > 500 * 1024 * 1024)) continue;
+            } catch (e) {
+                continue;
+            }
+
+            const vSeq = extractSeqNumber(vCand.path);
+            const fnTs = extractTimestampFromFilename(vCand.path);
+
+            // Dans un dossier vrac, pré-filtrer avant de lancer ffprobe
+            if (isDump && !isSelf) {
+                const seqClose = (targetSeq !== null && vSeq !== null && Math.abs(vSeq - targetSeq) <= 45);
+                const fnClose = (targetTimestampMs && fnTs && Math.abs(fnTs - targetTimestampMs) <= 72 * 3600 * 1000);
+                if (!seqClose && !fnClose && vCand.fastScore > 480) {
+                    continue;
+                }
+            }
+
+            const probe = probeVideo(vCand.path);
+            if (!probe.valid) continue;
+            if (!isSelf && (probe.durationSec < minDurationSec || probe.durationSec > 180)) continue;
+
+            const vidTs = probe.creationTimestampMs || fnTs;
+            if (isDump && !isSelf && targetTimestampMs && vidTs) {
+                const diffH = Math.abs(vidTs - targetTimestampMs) / (3600 * 1000);
+                if (diffH > 72) continue;
+            }
+
+            chosenVideos.push({
+                type: 'video',
+                path: vCand.path,
+                probe,
+                timestampMs: vidTs || targetTimestampMs || targetMtimeMs,
+                isSelf
+            });
+        }
+
+        // Trier les photos (en gardant la photo cible en 1er, puis ordre chronologique pour le reste)
+        const selfPhotos = chosenPhotos.filter(x => x.isSelf);
+        const otherPhotos = chosenPhotos.filter(x => !x.isSelf).sort((a, b) => (a.timestampMs || 0) - (b.timestampMs || 0));
+        const orderedPhotos = [...selfPhotos, ...otherPhotos];
+
+        console.log(`[Focus Moment] Sélection finale : ${orderedPhotos.length} photos et ${chosenVideos.length} vidéos pour "${momentLabel}"`);
+
+        // 6. Préparation du dossier /recalbox/share/userscripts/slideshow/focus
+        const focusDir = path.join(path.dirname(config.DEST_DIR), 'focus');
+        if (!fs.existsSync(focusDir)) {
+            fs.mkdirSync(focusDir, { recursive: true });
+        } else {
+            try {
+                for (const f of fs.readdirSync(focusDir)) {
+                    try { fs.unlinkSync(path.join(focusDir, f)); } catch (e) {}
+                }
+            } catch (e) {}
+        }
+
+        let writtenCount = 0;
+        let readySignaled = false;
+        const readyThreshold = Math.min(3, Math.max(1, orderedPhotos.length));
+
+        // Écrire d'abord toutes les photos (très rapide, ~1.5s pour les 3 premières)
+        for (const item of orderedPhotos) {
+            try {
+                const img = await loadImage(item.path);
+                const meta = item.meta || await getPhotoMetadata(item.path, config);
+                const itemLabel = computeImageLabel(meta) || momentLabel;
+
+                const isPortrait = img.bitmap.height > img.bitmap.width;
+                const maxW = config.SCREEN_W || 1280;
+                const maxH = isPortrait ? Math.max(config.SCREEN_W || 1280, config.SCREEN_H || 1024) : (config.SCREEN_H || 1024);
+                img.scaleToFit({ w: maxW, h: maxH });
+
+                writtenCount++;
+                const id = writtenCount.toString().padStart(3, '0');
+                await img.write(path.join(focusDir, `${id}.jpg`));
+
+                const sidecarContent = [
+                    itemLabel,
+                    (meta && (meta.fullDateStr || meta.dateStr)) || '',
+                    item.path
+                ].join('\n');
+                fs.writeFileSync(path.join(focusDir, `${id}.txt`), sidecarContent, 'utf8');
+                console.log(`  [Focus Photo ${id}] ${path.basename(item.path)} (${itemLabel})`);
+
+                if (!readySignaled && writtenCount >= readyThreshold) {
+                    readySignaled = true;
+                    writeCommandStatus({
+                        id: effectiveCmdId,
+                        action: 'focus',
+                        state: 'ready',
+                        ready: true,
+                        count: writtenCount,
+                        label: momentLabel,
+                        message: `Moment pret : ${momentLabel}`
+                    });
+                }
+            } catch (err) {
+                console.warn(`  [Focus Ignoré] ${path.basename(item.path)} : ${err.message}`);
+            }
+        }
+
+        // Convertir ensuite les vidéos du moment
+        if (chosenVideos.length > 0) {
+            const cacheDir = path.join(__dirname, '.cache');
+            if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+            const tempMp4 = path.join(cacheDir, `tmp_focus_vid_${process.pid}.mp4`);
+            const maxPlaySec = typeof config.VIDEO_MAX_PLAY_SEC === 'number' ? config.VIDEO_MAX_PLAY_SEC : 30;
+
+            for (const vItem of chosenVideos) {
+                try {
+                    if (!readySignaled) {
+                        writeCommandStatus({
+                            id: effectiveCmdId,
+                            action: 'focus',
+                            state: 'converting_video',
+                            ready: false,
+                            count: writtenCount,
+                            label: momentLabel,
+                            message: `Conversion video du moment (${path.basename(vItem.path)})...`
+                        });
+                    }
+                    convertVideoForBartop(vItem.path, tempMp4, maxPlaySec);
+                    writtenCount++;
+                    const id = writtenCount.toString().padStart(3, '0');
+                    fs.writeFileSync(path.join(focusDir, `${id}.mp4`), fs.readFileSync(tempMp4));
+                    try { fs.unlinkSync(tempMp4); } catch (e) {}
+
+                    const fl = getBestFolderLabel(vItem.path, config);
+                    const dt = extractDateFromPath(vItem.path, config);
+                    let vLabel = momentLabel;
+                    if (fl && dt) vLabel = `${capitalize(fl)} - ${dt}`;
+                    else if (fl) vLabel = capitalize(fl);
+
+                    const isTrimmed = vItem.probe.durationSec > maxPlaySec;
+                    const durStr = isTrimmed ? `${maxPlaySec}s` : vItem.probe.durationStr;
+
+                    const sidecarContent = [
+                        vLabel || 'Video du moment',
+                        durStr || '',
+                        vItem.path
+                    ].join('\n');
+                    fs.writeFileSync(path.join(focusDir, `${id}.txt`), sidecarContent, 'utf8');
+                    console.log(`  [Focus Video ${id}] ${path.basename(vItem.path)} (${durStr})`);
+
+                    if (!readySignaled) {
+                        readySignaled = true;
+                        writeCommandStatus({
+                            id: effectiveCmdId,
+                            action: 'focus',
+                            state: 'ready',
+                            ready: true,
+                            count: writtenCount,
+                            label: momentLabel,
+                            message: `Moment pret : ${momentLabel}`
+                        });
+                    }
+                } catch (vErr) {
+                    console.warn(`  [Focus Vidéo Ignorée] ${path.basename(vItem.path)} : ${vErr.message}`);
+                }
+            }
+        }
+
+        if (writtenCount === 0) {
+            writeCommandStatus({
+                id: effectiveCmdId,
+                action: 'focus',
+                state: 'error',
+                ready: false,
+                count: 0,
+                label: momentLabel,
+                message: 'Aucun media lisible trouve pour ce moment'
+            });
+        } else {
+            writeCommandStatus({
+                id: effectiveCmdId,
+                action: 'focus',
+                state: 'done',
+                ready: true,
+                count: writtenCount,
+                label: momentLabel,
+                message: `Moment : ${momentLabel} (${writtenCount} medias)`
+            });
+        }
+        console.log(`=== [Focus Moment] Terminé (${writtenCount} médias écrits dans focus/) ===\n`);
+    } finally {
+        releaseLock();
+    }
+}
+
 async function start(options = {}) {
     const videosOnly = Boolean(options.videosOnly || process.argv.includes('--videos-only'));
+    const cmdIdIdx = process.argv.indexOf('--cmd-id');
+    const cmdId = options.cmdId || (cmdIdIdx !== -1 && process.argv[cmdIdIdx + 1] ? process.argv[cmdIdIdx + 1] : null);
+
     if (!acquireLock()) {
         console.log("Fin du script car un autre tirage est actif.");
+        if (cmdId) {
+            writeCommandStatus({
+                id: cmdId,
+                action: 'new_draw',
+                state: 'error',
+                ready: false,
+                message: 'Un tirage PC est deja en cours...'
+            });
+        }
         return;
     }
     console.log(videosOnly ? "--- Lancement du tirage Vidéos uniquement ---" : "--- Lancement du tirage intelligent ---");
+    if (cmdId) {
+        writeCommandStatus({
+            id: cmdId,
+            action: 'new_draw',
+            state: 'running',
+            ready: false,
+            message: 'Nouveau tirage PC demarre...'
+        });
+    }
 
     try {
         const host = getHostFromPath(config.DEST_DIR);
@@ -913,6 +1440,16 @@ async function start(options = {}) {
                     count++;
                     const id = count.toString().padStart(3, '0');
                     const label = await processImage(photoPath, image, id, config.NB_IMAGES, check, meta);
+                    if (cmdId && (count === 1 || count % 5 === 0 || count === config.NB_IMAGES)) {
+                        writeCommandStatus({
+                            id: cmdId,
+                            action: 'new_draw',
+                            state: 'running',
+                            ready: false,
+                            count: count,
+                            message: `Tirage PC : ${count}/${config.NB_IMAGES} photos...`
+                        });
+                    }
                     
                     const newPhotoEntry = {
                         path: photoPath,
@@ -993,12 +1530,32 @@ async function start(options = {}) {
         }
 
         if (allVideos.length > 0) {
+            if (cmdId) {
+                writeCommandStatus({
+                    id: cmdId,
+                    action: 'new_draw',
+                    state: 'running',
+                    ready: false,
+                    message: 'Tirage PC : conversion videos...'
+                });
+            }
             const selectedVids = await processVideos(allVideos, (currentVids) => {
                 runReport.videos = [...currentVids];
                 writeReport();
             });
             runReport.videos = selectedVids || [];
             writeReport();
+        }
+
+        if (cmdId) {
+            writeCommandStatus({
+                id: cmdId,
+                action: 'new_draw',
+                state: 'done',
+                ready: true,
+                count: runReport.stats.selected,
+                message: `Nouveau tirage termine ! (${runReport.stats.selected} photos)`
+            });
         }
 
         console.log("\n--- Terminé ! ---");
@@ -1009,11 +1566,19 @@ async function start(options = {}) {
 }
 
 if (require.main === module) {
-    start();
+    const focusIdx = process.argv.indexOf('--focus');
+    const cmdIdIdx = process.argv.indexOf('--cmd-id');
+    const cmdId = (cmdIdIdx !== -1 && process.argv[cmdIdIdx + 1]) ? process.argv[cmdIdIdx + 1] : null;
+    if (focusIdx !== -1 && process.argv[focusIdx + 1]) {
+        runFocusMoment(process.argv[focusIdx + 1], cmdId);
+    } else {
+        start({ cmdId });
+    }
 }
 
 module.exports = {
     start,
+    runFocusMoment,
     loadImage,
     validateImageQuality,
     calculateSharpness

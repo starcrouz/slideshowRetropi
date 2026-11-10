@@ -50,5 +50,6 @@ function getBestLocation(lat, lon, config) {
 }
 
 module.exports = {
-    getBestLocation
+    getBestLocation,
+    getDistance
 };
