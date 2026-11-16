@@ -533,12 +533,17 @@ function writeCommandStatus(statusObj) {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) return;
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        const statusPath = path.join(path.dirname(cfg.DEST_DIR), 'command_status.json');
+        const bartopDir = path.dirname(cfg.DEST_DIR);
+        const statusPath = path.join(bartopDir, 'command_status.json');
+        const tmpPath = path.join(bartopDir, 'command_status.json.tmp');
         const payload = {
             ...statusObj,
             timestamp: Date.now()
         };
-        fs.writeFileSync(statusPath, JSON.stringify(payload, null, 2), 'utf8');
+        fs.writeFileSync(tmpPath, JSON.stringify(payload, null, 2), 'utf8');
+        try { fs.renameSync(tmpPath, statusPath); } catch (e) {
+            fs.writeFileSync(statusPath, JSON.stringify(payload, null, 2), 'utf8');
+        }
     } catch (e) {}
 }
 

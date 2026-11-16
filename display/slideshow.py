@@ -200,8 +200,16 @@ def send_pc_command(action_name, source_path=None):
         "timestamp": time.time()
     }
     try:
-        with open(COMMAND_FILE, 'w') as f:
-            json.dump(payload, f)
+        tmp_file = COMMAND_FILE + ".tmp"
+        with open(tmp_file, 'w') as f:
+            f.write(json.dumps(payload, indent=2))
+            f.flush()
+            try:
+                os.fsync(f.fileno())
+            except Exception:
+                pass
+        os.rename(tmp_file, COMMAND_FILE)
+        log_debug("COMMAND WRITTEN: id=%s action=%s" % (cmd_id, action_name))
         return cmd_id
     except Exception as e:
         log_debug("ERROR writing command.json: %s" % str(e))
