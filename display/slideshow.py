@@ -1432,7 +1432,7 @@ def run_slideshow(enable_animation=True):
                                     all_files = focus_files
                                     indices = list(range(len(all_files)))
                             pending_cmd_id = None
-                    elif (now - pending_cmd_start) > 7.5 and not pending_cmd_unack_warned:
+                    elif (now - pending_cmd_start) > 20.0 and not pending_cmd_unack_warned:
                         pending_cmd_unack_warned = True
                         show_toast(u"Serveur PC en attente (vérifiez que le serveur tourne sur le PC)", (251, 191, 36), duration=4.0)
 

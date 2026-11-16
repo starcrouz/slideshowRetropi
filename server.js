@@ -469,6 +469,20 @@ app.get('/api/video', (req, res) => {
 // --- SURVEILLANCE DES COMMANDES DU BARTOP (command.json) ---
 let lastProcessedCommandId = null;
 
+function writeCommandStatus(statusObj) {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        if (!fs.existsSync(configPath)) return;
+        const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        const statusPath = path.join(path.dirname(cfg.DEST_DIR), 'command_status.json');
+        const payload = {
+            ...statusObj,
+            timestamp: Date.now()
+        };
+        fs.writeFileSync(statusPath, JSON.stringify(payload, null, 2), 'utf8');
+    } catch (e) {}
+}
+
 async function initLastCommandId() {
     try {
         const configPath = path.join(__dirname, 'config.json');
@@ -502,6 +516,15 @@ async function pollBartopCommands() {
 
         lastProcessedCommandId = cmd.id;
         console.log(`\n[Commande Bartop reçue] Action="${cmd.action}" (id=${cmd.id})`);
+
+        // Accusé de réception immédiat vers le Bartop pour éviter le message de timeout
+        writeCommandStatus({
+            id: String(cmd.id),
+            action: cmd.action,
+            state: 'received',
+            ready: false,
+            message: cmd.action === 'focus' ? 'PC : Recherche du moment...' : 'PC : Lancement du tirage...'
+        });
 
         if (cmd.action === 'focus' && cmd.source_path) {
             if (activeProcess || isSelectionRunning()) {
