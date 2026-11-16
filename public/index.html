@@ -679,6 +679,57 @@
             transform: translateY(0);
             opacity: 1;
         }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .git-badge {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-update {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+            padding: 0.45rem 0.9rem;
+            border-radius: 0.5rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-update:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-update:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -710,6 +761,16 @@
                 Configuration
             </button>
         </nav>
+        <div class="header-actions">
+            <div class="git-badge" id="git-version" title="Version Git">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="1.05" y1="12" x2="7" y2="12"/><line x1="17.01" y1="12" x2="22.96" y2="12"/></svg>
+                <span id="git-version-text">Git...</span>
+            </div>
+            <button id="btn-update" class="btn-update" onclick="triggerUpdate()" title="Vérifier et télécharger les mises à jour (git pull)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Mettre à jour</span>
+            </button>
+        </div>
     </header>
 
     <main>
@@ -1050,6 +1111,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadConfig();
             loadHistory();
+            loadGitStatus();
             connectLogs();
             startBartopLivePolling();
 
@@ -1097,6 +1159,85 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
+        }
+
+        // Statut Git & Mise à jour
+        async function loadGitStatus() {
+            try {
+                const res = await fetch('/api/git-status');
+                const data = await res.json();
+                const textEl = document.getElementById('git-version-text');
+                const badgeEl = document.getElementById('git-version');
+                if (textEl && data.commit) {
+                    const shortHash = data.commit.split(' - ')[0] || data.commit;
+                    textEl.textContent = shortHash;
+                    if (badgeEl) {
+                        badgeEl.title = `Commit : ${data.commit}\nBranche : ${data.branch || 'main'}`;
+                    }
+                }
+            } catch (e) {
+                // Silencieux
+            }
+        }
+
+        async function triggerUpdate() {
+            const btn = document.getElementById('btn-update');
+            if (!btn) return;
+            const originalHTML = btn.innerHTML;
+
+            if (!confirm('Voulez-vous vérifier et télécharger les dernières mises à jour du projet sur le PC (git pull) ?')) {
+                return;
+            }
+
+            try {
+                btn.setAttribute('disabled', 'true');
+                btn.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;"></span> <span>Mise à jour...</span>`;
+                showToast('Vérification des mises à jour en cours...');
+
+                const res = await fetch('/api/update', { method: 'POST' });
+                const data = await res.json();
+
+                if (!res.ok || !data.success) {
+                    showToast(data.error || 'Erreur lors de la mise à jour', true);
+                    alert(`Erreur lors de la mise à jour :\n\n${data.error || 'Inconnue'}\n\n${data.output || ''}`);
+                    btn.removeAttribute('disabled');
+                    btn.innerHTML = originalHTML;
+                    return;
+                }
+
+                if (data.updated) {
+                    showToast('Mise à jour installée ! Redémarrage du serveur...', false);
+                    btn.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;"></span> <span>Redémarrage...</span>`;
+
+                    let attempts = 0;
+                    const pollServer = setInterval(async () => {
+                        attempts++;
+                        try {
+                            const check = await fetch('/api/status', { cache: 'no-store' });
+                            if (check.ok) {
+                                clearInterval(pollServer);
+                                showToast('Serveur prêt ! Rechargement...', false);
+                                setTimeout(() => window.location.reload(), 800);
+                            }
+                        } catch (e) {
+                            if (attempts > 30) {
+                                clearInterval(pollServer);
+                                alert('Mise à jour terminée ! Veuillez recharger la page.');
+                                window.location.reload();
+                            }
+                        }
+                    }, 1000);
+                } else {
+                    showToast('Le serveur est déjà à jour !');
+                    btn.removeAttribute('disabled');
+                    btn.innerHTML = originalHTML;
+                    loadGitStatus();
+                }
+            } catch (e) {
+                showToast('Erreur : ' + e.message, true);
+                btn.removeAttribute('disabled');
+                btn.innerHTML = originalHTML;
+            }
         }
 
         // Configurer les champs de qualité selon le switch global

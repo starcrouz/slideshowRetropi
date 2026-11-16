@@ -282,6 +282,65 @@ app.get('/api/status', (req, res) => {
     res.json({ running: isSelectionRunning() });
 });
 
+// API: Obtenir le statut Git (commit actuel et branche)
+app.get('/api/git-status', (req, res) => {
+    try {
+        const commit = execSync('git log -1 --format="%h - %s (%cr)"', { cwd: __dirname, encoding: 'utf8' }).trim();
+        const branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: __dirname, encoding: 'utf8' }).trim();
+        res.json({ commit, branch });
+    } catch (e) {
+        res.json({ commit: 'Inconnu', branch: 'main', error: e.message });
+    }
+});
+
+// API: Mettre à jour l'application via git pull
+app.post('/api/update', (req, res) => {
+    if (activeProcess || isSelectionRunning()) {
+        return res.status(400).json({ error: 'Un tirage est actuellement en cours. Veuillez attendre ou interrompre le tirage avant de mettre à jour.' });
+    }
+
+    try {
+        console.log('\n[Update] Exécution de git pull...');
+        const stdout = execSync('git pull', { cwd: __dirname, encoding: 'utf8', timeout: 30000 });
+        console.log('[Update] Résultat :\n' + stdout);
+
+        const updated = !stdout.includes('Already up to date') && !stdout.includes('Déjà à jour');
+
+        res.json({
+            success: true,
+            updated,
+            output: stdout.trim(),
+            message: updated ? 'Mise à jour téléchargée avec succès ! Le serveur va redémarrer...' : 'Le serveur est déjà à jour.'
+        });
+
+        if (updated) {
+            setTimeout(() => {
+                console.log('[Update] Arrêt de l\'écoute et redémarrage du serveur...');
+                if (serverInstance) {
+                    serverInstance.close(() => {
+                        const child = spawn(process.argv[0], process.argv.slice(1), {
+                            detached: true,
+                            stdio: 'inherit',
+                            cwd: __dirname
+                        });
+                        child.unref();
+                        process.exit(0);
+                    });
+                } else {
+                    process.exit(0);
+                }
+            }, 1200);
+        }
+    } catch (e) {
+        console.error('[Update] Erreur lors du git pull :', e);
+        res.status(500).json({
+            success: false,
+            error: e.message,
+            output: e.stdout ? e.stdout.toString() : ''
+        });
+    }
+});
+
 // API: Obtenir l'élément actuellement affiché sur le Bartop (non-bloquant si le Bartop est éteint)
 app.get('/api/bartop-current', async (req, res) => {
     try {
@@ -545,7 +604,7 @@ async function pollBartopCommands() {
 initLastCommandId();
 setInterval(pollBartopCommands, 2000);
 
-app.listen(PORT, () => {
+const serverInstance = app.listen(PORT, () => {
     console.log(`==================================================`);
     console.log(` Serveur Dashboard Bartop démarré sur :`);
     console.log(` http://localhost:${PORT}`);
