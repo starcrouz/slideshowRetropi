@@ -586,6 +586,44 @@ async function initLastCommandId() {
     } catch (e) {}
 }
 
+// API: Réception directe d'une commande du Bartop via HTTP (évite la latence et les verrous SMB)
+app.post('/api/bartop/command', (req, res) => {
+    try {
+        const { id, action, source_path } = req.body || {};
+        if (!id || !action) {
+            return res.status(400).json({ error: 'id et action requis' });
+        }
+        console.log(`\n[Commande HTTP directe Bartop] Action="${action}" (id=${id})`);
+
+        lastProcessedCommandId = String(id);
+
+        writeCommandStatus({
+            id: String(id),
+            action: action,
+            state: 'received',
+            ready: false,
+            message: action === 'focus' ? 'PC : Recherche du moment...' : 'PC : Lancement du tirage...'
+        });
+
+        if (action === 'focus' && source_path) {
+            if (activeProcess || isSelectionRunning()) {
+                stopRunningSelectionSilent();
+            }
+            launchIndexProcess(['index.js', '--focus', source_path, '--cmd-id', String(id)]);
+        } else if (action === 'new_draw') {
+            if (activeProcess || isSelectionRunning()) {
+                stopRunningSelectionSilent();
+            }
+            launchIndexProcess(['index.js', '--cmd-id', String(id)]);
+        }
+
+        res.json({ success: true, id, message: 'Commande prise en compte par le PC' });
+    } catch (e) {
+        console.error('Erreur /api/bartop/command :', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 let isPollingBartopCommands = false;
 
 async function pollBartopCommands() {
