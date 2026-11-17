@@ -861,33 +861,34 @@ async function runFocusMoment(targetSourcePath, cmdId = null) {
             if (path.resolve(filePath) === path.resolve(targetSourcePath)) return -1;
             const seq = extractSeqNumber(filePath);
             const fnTs = extractTimestampFromFilename(filePath);
-            let mtimeDistHours = 999999;
+
+            // Priorité absolue aux heuristiques sur le nom de fichier (instantané sans I/O disque)
+            if (targetTimestampMs && fnTs) {
+                return Math.abs(fnTs - targetTimestampMs) / (60 * 1000); // minutes d'écart
+            }
+            if (targetSeq !== null && seq !== null) {
+                return Math.abs(seq - targetSeq) * 2; // proximité numéro IMG_xxxx
+            }
+
+            // Fallback fs.statSync uniquement si ni date ni séquence dans le nom
             try {
                 const st = fs.statSync(filePath);
                 const refTs = targetTimestampMs || targetMtimeMs;
-                mtimeDistHours = Math.abs(st.mtimeMs - refTs) / (3600 * 1000);
-            } catch (e) {}
-
-            let score = 100000;
-            if (targetTimestampMs && fnTs) {
-                score = Math.abs(fnTs - targetTimestampMs) / (60 * 1000); // minutes d'écart
-            } else if (targetSeq !== null && seq !== null) {
-                score = Math.abs(seq - targetSeq) * 2; // proximité numéro IMG_xxxx
-            } else {
-                score = mtimeDistHours * 10;
+                return (Math.abs(st.mtimeMs - refTs) / (3600 * 1000)) * 10;
+            } catch (e) {
+                return 999999;
             }
-            return score;
         };
 
         const preRankedPhotos = rawPhotos
             .map(p => ({ path: p, fastScore: scoreCandidateFast(p) }))
             .sort((a, b) => a.fastScore - b.fastScore)
-            .slice(0, isDump ? 140 : 200);
+            .slice(0, isDump ? 35 : 45);
 
         const preRankedVideos = rawVideos
             .map(v => ({ path: v, fastScore: scoreCandidateFast(v) }))
             .sort((a, b) => a.fastScore - b.fastScore)
-            .slice(0, isDump ? 20 : 30);
+            .slice(0, isDump ? 10 : 15);
 
         // 4. Analyse EXIF des meilleures photos candidates
         const tier1Photos = []; // Même moment / journée (<= 36h ou GPS proche <= 72h)

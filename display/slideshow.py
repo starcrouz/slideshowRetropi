@@ -199,6 +199,19 @@ def send_pc_command(action_name, source_path=None):
         "source_path": source_path or u"",
         "timestamp": time.time()
     }
+
+    # 1. Envoi HTTP direct instantane au serveur Node.js du PC (192.168.1.115)
+    try:
+        import urllib2
+        data_bytes = json.dumps(payload)
+        req = urllib2.Request("http://192.168.1.115:3000/api/bartop/command", data_bytes, {"Content-Type": "application/json"})
+        resp = urllib2.urlopen(req, timeout=3.0)
+        if resp.getcode() == 200:
+            log_debug("COMMAND SENT VIA HTTP: id=%s action=%s" % (cmd_id, action_name))
+    except Exception as e:
+        log_debug("HTTP direct send error: %s" % str(e))
+
+    # 2. Ecriture du fichier command.json local (en backup / fallback)
     try:
         tmp_file = COMMAND_FILE + ".tmp"
         with open(tmp_file, 'w') as f:
@@ -213,7 +226,7 @@ def send_pc_command(action_name, source_path=None):
         return cmd_id
     except Exception as e:
         log_debug("ERROR writing command.json: %s" % str(e))
-        return None
+        return cmd_id
 
 
 def read_pc_command_status():
@@ -1440,7 +1453,7 @@ def run_slideshow(enable_animation=True):
                                     all_files = focus_files
                                     indices = list(range(len(all_files)))
                             pending_cmd_id = None
-                    elif (now - pending_cmd_start) > 20.0 and not pending_cmd_unack_warned:
+                    elif (now - pending_cmd_start) > 45.0 and not pending_cmd_unack_warned:
                         pending_cmd_unack_warned = True
                         show_toast(u"Serveur PC en attente (vérifiez que le serveur tourne sur le PC)", (251, 191, 36), duration=4.0)
 
