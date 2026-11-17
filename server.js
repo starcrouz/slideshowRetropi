@@ -18,9 +18,9 @@ function getHostFromUncPath(p) {
 
 let cachedOnlineState = { online: false, checkedAt: 0, checking: null };
 
-function checkBartopOnline(host, port = 445, timeout = 700) {
+function checkBartopOnline(host, port = 445, timeout = 2500) {
     const now = Date.now();
-    if (now - cachedOnlineState.checkedAt < 2500) {
+    if (now - cachedOnlineState.checkedAt < 3000) {
         return Promise.resolve(cachedOnlineState.online);
     }
     if (cachedOnlineState.checking) {
@@ -181,10 +181,12 @@ function stopRunningSelectionSilent() {
 
 function launchIndexProcess(args) {
     logBuffer = [];
-    activeProcess = spawn('node', args, { cwd: __dirname });
+    const execPath = process.execPath || 'node';
+    activeProcess = spawn(execPath, args, { cwd: __dirname });
 
     const handleData = (data) => {
         const text = data.toString();
+        process.stdout.write(text);
         logBuffer.push(text);
         sendLogsToClients(text);
     };
@@ -192,8 +194,17 @@ function launchIndexProcess(args) {
     activeProcess.stdout.on('data', handleData);
     activeProcess.stderr.on('data', handleData);
 
+    activeProcess.on('error', (err) => {
+        const errMsg = `\n[Erreur lancement processus index.js] : ${err.message}\n`;
+        console.error(errMsg);
+        logBuffer.push(errMsg);
+        sendLogsToClients(errMsg);
+        activeProcess = null;
+    });
+
     activeProcess.on('close', (code) => {
         const msg = `\n--- Terminé ! Code de sortie : ${code} ---\n`;
+        console.log(msg);
         logBuffer.push(msg);
         sendLogsToClients(msg);
         activeProcess = null;
@@ -552,13 +563,23 @@ async function initLastCommandId() {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) return;
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        const host = getHostFromUncPath(cfg.DEST_DIR);
-        if (host && !(await checkBartopOnline(host))) return;
-        const cmdFile = path.join(path.dirname(cfg.DEST_DIR), 'command.json');
+        const bartopDir = path.dirname(cfg.DEST_DIR);
+        const cmdFile = path.join(bartopDir, 'command.json');
+        const statusFile = path.join(bartopDir, 'command_status.json');
+        if (!fs.existsSync(cmdFile)) return;
         const raw = await fs.promises.readFile(cmdFile, 'utf8');
         const cmd = JSON.parse(raw);
         if (cmd && cmd.id) {
-            lastProcessedCommandId = cmd.id;
+            // Ne marquer comme déjà traité au démarrage QUE si le status a déjà été traité (state === 'done' ou 'ready')
+            if (fs.existsSync(statusFile)) {
+                try {
+                    const stRaw = fs.readFileSync(statusFile, 'utf8');
+                    const st = JSON.parse(stRaw);
+                    if (st && st.id === cmd.id && (st.state === 'done' || st.state === 'ready')) {
+                        lastProcessedCommandId = cmd.id;
+                    }
+                } catch (e) {}
+            }
         }
     } catch (e) {}
 }
@@ -573,6 +594,7 @@ async function pollBartopCommands() {
 
         const bartopDir = path.dirname(cfg.DEST_DIR);
         const cmdFile = path.join(bartopDir, 'command.json');
+        if (!fs.existsSync(cmdFile)) return;
         const raw = (await fs.promises.readFile(cmdFile, 'utf8')).trim();
         if (!raw) return;
         const cmd = JSON.parse(raw);
@@ -602,7 +624,7 @@ async function pollBartopCommands() {
             launchIndexProcess(['index.js', '--cmd-id', String(cmd.id)]);
         }
     } catch (e) {
-        // Ignorer les erreurs réseau temporaires ou JSON en cours d'écriture
+        // Ignorer les erreurs temporaires
     }
 }
 
