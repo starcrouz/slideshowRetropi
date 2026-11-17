@@ -32,13 +32,15 @@ function checkBartopOnline(host, port = 445, timeout = 2500) {
         const finish = (ok) => {
             if (!done) {
                 done = true;
-                socket.destroy();
+                clearTimeout(hardTimer);
+                try { socket.destroy(); } catch (e) {}
                 cachedOnlineState.online = ok;
                 cachedOnlineState.checkedAt = Date.now();
                 cachedOnlineState.checking = null;
                 resolve(ok);
             }
         };
+        const hardTimer = setTimeout(() => finish(false), timeout + 500);
         socket.setTimeout(timeout);
         socket.connect(port, host, () => finish(true));
         socket.on('error', () => finish(false));
@@ -584,13 +586,15 @@ async function initLastCommandId() {
     } catch (e) {}
 }
 
+let isPollingBartopCommands = false;
+
 async function pollBartopCommands() {
+    if (isPollingBartopCommands) return;
+    isPollingBartopCommands = true;
     try {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) return;
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        const host = getHostFromUncPath(cfg.DEST_DIR);
-        if (host && !(await checkBartopOnline(host))) return;
 
         const bartopDir = path.dirname(cfg.DEST_DIR);
         const cmdFile = path.join(bartopDir, 'command.json');
@@ -624,7 +628,9 @@ async function pollBartopCommands() {
             launchIndexProcess(['index.js', '--cmd-id', String(cmd.id)]);
         }
     } catch (e) {
-        // Ignorer les erreurs temporaires
+        // Ignorer les erreurs temporaires (fichier en cours d'écriture, partage temporairement inaccessible)
+    } finally {
+        isPollingBartopCommands = false;
     }
 }
 
