@@ -955,6 +955,12 @@
                             <span class="description">Coupe les vidéos longues à cette durée (ex: 30s).</span>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label for="VIDEO_MAX_THREADS">Cœurs CPU max pour la conversion vidéo (FFmpeg)</label>
+                        <input type="number" class="form-input" id="VIDEO_MAX_THREADS" min="1" max="16" required>
+                        <span class="description">Limite l'utilisation du processeur pendant l'encodage vidéo (ex: 1 ou 2 cœurs sur 12 pour garder le PC fluide).</span>
+                    </div>
                 </div>
                 
                 <div class="config-section">

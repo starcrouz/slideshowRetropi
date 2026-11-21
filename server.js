@@ -540,8 +540,57 @@ app.get('/api/video', (req, res) => {
 
 // --- SURVEILLANCE DES COMMANDES DU BARTOP (command.json) ---
 let lastProcessedCommandId = null;
+let lastProcessedCommandNum = 0;
+const processedCommandIds = new Set();
+
+function extractCommandNum(id) {
+    if (!id) return 0;
+    const m = String(id).match(/(\d{10,})/);
+    return m ? parseInt(m[1], 10) : 0;
+}
+
+function markCommandProcessed(id) {
+    if (!id) return;
+    const strId = String(id);
+    lastProcessedCommandId = strId;
+    processedCommandIds.add(strId);
+    const num = extractCommandNum(strId);
+    if (num > lastProcessedCommandNum) {
+        lastProcessedCommandNum = num;
+    }
+}
+
+function isCommandAlreadyProcessedOrStale(id, isFromSmbPoll = false, cmdTimestampSec = 0) {
+    if (!id) return true;
+    const strId = String(id);
+    if (strId === lastProcessedCommandId || processedCommandIds.has(strId)) {
+        return true;
+    }
+    const num = extractCommandNum(strId);
+    if (num > 0 && lastProcessedCommandNum > 0 && num <= lastProcessedCommandNum) {
+        // Empêche un ancien command.json en cache SMB d'écraser une commande HTTP plus récente
+        processedCommandIds.add(strId);
+        return true;
+    }
+    if (isFromSmbPoll && cmdTimestampSec > 0) {
+        const ageSec = (Date.now() / 1000) - cmdTimestampSec;
+        if (ageSec > 60) {
+            processedCommandIds.add(strId);
+            return true;
+        }
+    }
+    return false;
+}
 
 function writeCommandStatus(statusObj) {
+    const payload = {
+        ...statusObj,
+        timestamp: Date.now()
+    };
+    const jsonStr = JSON.stringify(payload, null, 2);
+    try {
+        fs.writeFileSync(path.join(__dirname, 'command_status.json'), jsonStr, 'utf8');
+    } catch (e) {}
     try {
         const configPath = path.join(__dirname, 'config.json');
         if (!fs.existsSync(configPath)) return;
@@ -549,13 +598,9 @@ function writeCommandStatus(statusObj) {
         const bartopDir = path.dirname(cfg.DEST_DIR);
         const statusPath = path.join(bartopDir, 'command_status.json');
         const tmpPath = path.join(bartopDir, 'command_status.json.tmp');
-        const payload = {
-            ...statusObj,
-            timestamp: Date.now()
-        };
-        fs.writeFileSync(tmpPath, JSON.stringify(payload, null, 2), 'utf8');
+        fs.writeFileSync(tmpPath, jsonStr, 'utf8');
         try { fs.renameSync(tmpPath, statusPath); } catch (e) {
-            fs.writeFileSync(statusPath, JSON.stringify(payload, null, 2), 'utf8');
+            fs.writeFileSync(statusPath, jsonStr, 'utf8');
         }
     } catch (e) {}
 }
@@ -567,24 +612,26 @@ async function initLastCommandId() {
         const cfg = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         const bartopDir = path.dirname(cfg.DEST_DIR);
         const cmdFile = path.join(bartopDir, 'command.json');
-        const statusFile = path.join(bartopDir, 'command_status.json');
         if (!fs.existsSync(cmdFile)) return;
         const raw = await fs.promises.readFile(cmdFile, 'utf8');
         const cmd = JSON.parse(raw);
         if (cmd && cmd.id) {
-            // Ne marquer comme déjà traité au démarrage QUE si le status a déjà été traité (state === 'done' ou 'ready')
-            if (fs.existsSync(statusFile)) {
-                try {
-                    const stRaw = fs.readFileSync(statusFile, 'utf8');
-                    const st = JSON.parse(stRaw);
-                    if (st && st.id === cmd.id && (st.state === 'done' || st.state === 'ready')) {
-                        lastProcessedCommandId = cmd.id;
-                    }
-                } catch (e) {}
-            }
+            markCommandProcessed(cmd.id);
         }
     } catch (e) {}
 }
+
+// API: Statut en direct de la commande Bartop via HTTP (évite tout délai de cache SMB)
+app.get('/api/bartop/command-status', (req, res) => {
+    try {
+        const localStatusPath = path.join(__dirname, 'command_status.json');
+        if (fs.existsSync(localStatusPath)) {
+            const raw = fs.readFileSync(localStatusPath, 'utf8');
+            return res.json(JSON.parse(raw));
+        }
+    } catch (e) {}
+    res.json({});
+});
 
 // API: Réception directe d'une commande du Bartop via HTTP (évite la latence et les verrous SMB)
 app.post('/api/bartop/command', (req, res) => {
@@ -593,9 +640,12 @@ app.post('/api/bartop/command', (req, res) => {
         if (!id || !action) {
             return res.status(400).json({ error: 'id et action requis' });
         }
+        if (isCommandAlreadyProcessedOrStale(id, false)) {
+            return res.json({ success: true, id, message: 'Commande déjà prise en compte' });
+        }
         console.log(`\n[Commande HTTP directe Bartop] Action="${action}" (id=${id})`);
 
-        lastProcessedCommandId = String(id);
+        markCommandProcessed(id);
 
         writeCommandStatus({
             id: String(id),
@@ -640,9 +690,9 @@ async function pollBartopCommands() {
         const raw = (await fs.promises.readFile(cmdFile, 'utf8')).trim();
         if (!raw) return;
         const cmd = JSON.parse(raw);
-        if (!cmd || !cmd.id || cmd.id === lastProcessedCommandId) return;
+        if (!cmd || !cmd.id || isCommandAlreadyProcessedOrStale(cmd.id, true, Number(cmd.timestamp) || 0)) return;
 
-        lastProcessedCommandId = cmd.id;
+        markCommandProcessed(cmd.id);
         console.log(`\n[Commande Bartop reçue] Action="${cmd.action}" (id=${cmd.id})`);
 
         // Accusé de réception immédiat vers le Bartop pour éviter le message de timeout

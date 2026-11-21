@@ -16,6 +16,7 @@ import signal
 import re
 import math
 import traceback
+import gc
 
 # --- CONFIGURATION PAR DÉFAUT ---
 # Boutons de devant (Façade : Start, Select, Coin, Hotkey) qui provoquent la sortie
@@ -200,18 +201,7 @@ def send_pc_command(action_name, source_path=None):
         "timestamp": time.time()
     }
 
-    # 1. Envoi HTTP direct instantane au serveur Node.js du PC (192.168.1.115)
-    try:
-        import urllib2
-        data_bytes = json.dumps(payload)
-        req = urllib2.Request("http://192.168.1.115:3000/api/bartop/command", data_bytes, {"Content-Type": "application/json"})
-        resp = urllib2.urlopen(req, timeout=3.0)
-        if resp.getcode() == 200:
-            log_debug("COMMAND SENT VIA HTTP: id=%s action=%s" % (cmd_id, action_name))
-    except Exception as e:
-        log_debug("HTTP direct send error: %s" % str(e))
-
-    # 2. Ecriture du fichier command.json local (en backup / fallback)
+    # 1. Ecriture du fichier command.json local en premier (pour que le fichier sur disque soit toujours à jour avant l'appel HTTP)
     try:
         tmp_file = COMMAND_FILE + ".tmp"
         with open(tmp_file, 'w') as f:
@@ -223,13 +213,37 @@ def send_pc_command(action_name, source_path=None):
                 pass
         os.rename(tmp_file, COMMAND_FILE)
         log_debug("COMMAND WRITTEN: id=%s action=%s" % (cmd_id, action_name))
-        return cmd_id
     except Exception as e:
         log_debug("ERROR writing command.json: %s" % str(e))
-        return cmd_id
+
+    # 2. Envoi HTTP direct instantane au serveur Node.js du PC (192.168.1.115)
+    try:
+        import urllib2
+        data_bytes = json.dumps(payload)
+        req = urllib2.Request("http://192.168.1.115:3000/api/bartop/command", data_bytes, {"Content-Type": "application/json"})
+        resp = urllib2.urlopen(req, timeout=3.0)
+        if resp.getcode() == 200:
+            log_debug("COMMAND SENT VIA HTTP: id=%s action=%s" % (cmd_id, action_name))
+    except Exception as e:
+        log_debug("HTTP direct send error: %s" % str(e))
+
+    return cmd_id
 
 
 def read_pc_command_status():
+    # 1. Lecture HTTP directe depuis le serveur PC (instantanée, sans cache SMB)
+    try:
+        import urllib2
+        req = urllib2.Request("http://192.168.1.115:3000/api/bartop/command-status")
+        resp = urllib2.urlopen(req, timeout=1.2)
+        if resp.getcode() == 200:
+            data = json.loads(resp.read())
+            if isinstance(data, dict) and data.get("id"):
+                return data
+    except Exception:
+        pass
+
+    # 2. Fallback sur le fichier command_status.json local
     if not os.path.exists(COMMAND_STATUS_FILE):
         return None
     try:
@@ -1153,6 +1167,46 @@ def draw_video_backdrop(screen, sw, sh, internal_mode, video_meta, is_muted, fon
 
 
 def run_slideshow(enable_animation=True):
+    lock_fd = None
+    try:
+        lock_fd = open("/tmp/bartop_slideshow.lock", "w")
+        fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        lock_fd.write(str(os.getpid()))
+        lock_fd.flush()
+    except Exception:
+        log_debug("Another instance of slideshow.py is already running, exiting.")
+        return
+
+    # Réinitialiser /dev/tty0..tty4 en mode VT_AUTO / KD_TEXT et activer VT 1 au cas où un processus SDL précédent aurait été tué brutalement
+    for tty_path in ("/dev/tty0", "/dev/tty1", "/dev/tty2", "/dev/tty3", "/dev/tty4"):
+        try:
+            tty_fd = os.open(tty_path, os.O_RDWR | os.O_NDELAY)
+            try:
+                fcntl.ioctl(tty_fd, 0x560C, 1)            # VT_UNLOCKSWITCH
+            except Exception:
+                pass
+            for rel_arg in (1, 2):
+                try:
+                    fcntl.ioctl(tty_fd, 0x5605, rel_arg)  # VT_RELDISP
+                except Exception:
+                    pass
+            try:
+                fcntl.ioctl(tty_fd, 0x5602, b'\x00' * 8)  # VT_SETMODE -> VT_AUTO
+            except Exception:
+                pass
+            try:
+                fcntl.ioctl(tty_fd, 0x4B3A, 0)            # KDSETMODE -> KD_TEXT
+            except Exception:
+                pass
+            if tty_path == "/dev/tty0":
+                try:
+                    fcntl.ioctl(tty_fd, 0x5606, 1)        # VT_ACTIVATE(1)
+                except Exception:
+                    pass
+            os.close(tty_fd)
+        except Exception:
+            pass
+
     os.environ["SDL_VIDEODRIVER"] = "fbcon"
     os.environ["SDL_NOMOUSE"] = "1"
 
@@ -1876,6 +1930,8 @@ def run_slideshow(enable_animation=True):
                 cached = None
                 if nav_steer > 0:
                     # Avance (>)
+                    for old_h in nav_history:
+                        old_h["scene"] = None
                     nav_history.append({
                         "ptr": current_idx_ptr,
                         "step": current_step,
@@ -1896,12 +1952,16 @@ def run_slideshow(enable_animation=True):
                 else:
                     # Retour (<) : reprend exactement la dernière vue visitée
                     if nav_history:
+                        for old_f in nav_forward_stack:
+                            old_f["scene"] = None
                         nav_forward_stack.append({
                             "ptr": current_idx_ptr,
                             "step": current_step,
                             "style": active_render_style,
                             "scene": modern_scene
                         })
+                        if len(nav_forward_stack) > 30:
+                            nav_forward_stack.pop(0)
                         hist_item = nav_history.pop()
                         current_idx_ptr = hist_item["ptr"]
                         forced_style = hist_item.get("style")
@@ -1964,6 +2024,11 @@ def run_slideshow(enable_animation=True):
 
                 if curr_is_photo:
                     try:
+                        # Libérer la scène précédente et forcer le ramasse-miettes pour éviter toute saturation RAM sur RPi
+                        modern_scene = None
+                        current_img_raw = None
+                        gc.collect()
+
                         # Choix du style de rendu pour cette photo (en Mode Focus, on privilégie un affichage solo chronologique)
                         if internal_mode == MODE_FOCUS:
                             if photo_style in (STYLE_MAGAZINE, STYLE_ARCADE, STYLE_CLASSIC):
@@ -2425,7 +2490,14 @@ def run_slideshow(enable_animation=True):
                             if last_tap_dir != 0 and last_tap_done_time == last_tap_start_time:
                                 last_tap_done_time = last_switch
 
-                    except Exception:
+                    except Exception as load_err:
+                        log_debug("ERROR loading photo %s: %s" % (file_path, str(load_err)))
+                        modern_scene = None
+                        for h_it in nav_history:
+                            h_it["scene"] = None
+                        for h_it in nav_forward_stack:
+                            h_it["scene"] = None
+                        gc.collect()
                         current_idx_ptr = (current_idx_ptr + 1) % len(indices)
                 else:
                     screen.fill((0, 0, 0))
@@ -2501,6 +2573,8 @@ def run_slideshow(enable_animation=True):
                         manual_skip = False
 
             if not need_load and not show_info and curr_is_photo and now - last_switch > display_time:
+                for old_h in nav_history:
+                    old_h["scene"] = None
                 nav_history.append({
                     "ptr": current_idx_ptr,
                     "step": current_step,
@@ -2700,6 +2774,12 @@ def run_slideshow(enable_animation=True):
         for f in input_files:
             f.close()
         pygame.quit()
+        if lock_fd:
+            try:
+                fcntl.flock(lock_fd.fileno(), fcntl.LOCK_UN)
+                lock_fd.close()
+            except Exception:
+                pass
         sys.exit()
 
 

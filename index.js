@@ -1,4 +1,5 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { Jimp } = require('jimp');
 const { globSync } = require('glob');
@@ -9,6 +10,13 @@ const crypto = require('crypto');
 const { createWorker } = require('tesseract.js');
 
 const config = require('./config.json');
+
+// Réduire la priorité CPU du processus (et des sous-processus FFmpeg) pour ne pas ralentir le PC
+try {
+    os.setPriority(process.pid, os.constants.priority.PRIORITY_BELOW_NORMAL);
+} catch (e) {
+    // Ignorer si non supporté par l'OS
+}
 
 // Augmenter la limite mémoire pour les grosses photos HEIC/iPhone 15
 Jimp.maxMemoryUsageInMB = 2048;
@@ -72,13 +80,17 @@ const { getBestLocation, getDistance } = require('./geo');
 const { getPhotoMetadata, getBestFolderLabel, capitalize, extractDateFromPath } = require('./metadata');
 
 function writeCommandStatus(statusObj) {
+    const payload = {
+        ...statusObj,
+        timestamp: Date.now()
+    };
+    const jsonStr = JSON.stringify(payload, null, 2);
+    try {
+        fs.writeFileSync(path.join(__dirname, 'command_status.json'), jsonStr, 'utf8');
+    } catch (e) {}
     try {
         const statusPath = path.join(path.dirname(config.DEST_DIR), 'command_status.json');
-        const payload = {
-            ...statusObj,
-            timestamp: Date.now()
-        };
-        fs.writeFileSync(statusPath, JSON.stringify(payload, null, 2), 'utf8');
+        fs.writeFileSync(statusPath, jsonStr, 'utf8');
     } catch (e) {
         // Ignorer si partage réseau momentanément indisponible
     }
@@ -425,18 +437,21 @@ function probeVideo(filePath) {
 function convertVideoForBartop(inputPath, outputPath, maxPlaySec = 30) {
     const maxW = config.SCREEN_W || 1280;
     const maxH = config.SCREEN_H || 1024;
+    const maxThreads = Math.max(1, parseInt(config.VIDEO_MAX_THREADS, 10) || 2);
     // Redimensionne sans dépasser l'écran, force des dimensions paires, 30 fps constants et format 8-bit yuv420p (requis par omxplayer RPi)
     const vf = `scale='min(${maxW},iw)':'min(${maxH},ih)':force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2,fps=30,format=yuv420p`;
 
     const args = [
         '-y',
-        '-v', 'error'
+        '-v', 'error',
+        '-threads', String(maxThreads)
     ];
     if (typeof maxPlaySec === 'number' && maxPlaySec > 0) {
         args.push('-t', String(maxPlaySec));
     }
     args.push(
         '-i', inputPath,
+        '-threads', String(maxThreads),
         '-map', '0:v:0',
         '-map', '0:a:0?',
         '-dn',
@@ -458,7 +473,7 @@ function convertVideoForBartop(inputPath, outputPath, maxPlaySec = 30) {
     execFileSync(
         'ffmpeg',
         args,
-        { stdio: ['ignore', 'ignore', 'pipe'], timeout: 180000 }
+        { stdio: ['ignore', 'ignore', 'pipe'], timeout: 300000 }
     );
 
     if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size < 1024) {
@@ -508,8 +523,9 @@ async function processImage(photoPath, image, id, total, checkResult, meta) {
 async function processVideos(allVideoFiles, onProgress) {
     const minDurationSec = typeof config.VIDEO_MIN_DURATION_SEC === 'number' ? config.VIDEO_MIN_DURATION_SEC : 4;
     const maxPlaySec = typeof config.VIDEO_MAX_PLAY_SEC === 'number' ? config.VIDEO_MAX_PLAY_SEC : 30;
+    const maxThreads = Math.max(1, parseInt(config.VIDEO_MAX_THREADS, 10) || 2);
     const maxDurationSec = 180; // Max 3 minutes par vidéo source pour éviter les longs films
-    console.log(`\n--- Tirage & Conversion Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo, durée min ${minDurationSec}s, coupées à ${maxPlaySec}s max) ---`);
+    console.log(`\n--- Tirage & Conversion Vidéos (Limite ${config.VIDEO_LIMIT_MB} Mo, durée min ${minDurationSec}s, coupées à ${maxPlaySec}s max, CPU max: ${maxThreads} threads) ---`);
 
     if (!fs.existsSync(config.VIDEO_DEST_DIR)) {
         fs.mkdirSync(config.VIDEO_DEST_DIR, { recursive: true });
