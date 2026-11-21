@@ -1,36 +1,26 @@
 {
-  "timestamp": 1795257854828,
+  "timestamp": 1795271795309,
   "stats": {
     "totalPhotos": 303038,
     "totalVideos": 13700,
     "selected": 100,
-    "rejected": 20
+    "rejected": 58
   },
   "selected": [
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-07 vacances Bulgarie\\P1080132.JPG",
-      "label": "Montana (Bulgarie) - Août 2011",
-      "sharpness": 377,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-30 (vacances toussaint moelan sur mer)\\P1090620.JPG",
+      "label": "Paris - Octobre 2011",
+      "sharpness": 369,
       "width": 2560,
       "height": 1920,
       "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
+      "ocrWords": 3,
+      "ocrChars": 7
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-01-07\\P1000059.JPG",
-      "label": "2011 - Novembre 2010",
-      "sharpness": 357,
-      "width": 2448,
-      "height": 3264,
-      "rotationDeg": 90,
-      "ocrWords": 2,
-      "ocrChars": 5
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-10-16\\P1190339.JPG",
-      "label": "Paris - Octobre 2012",
-      "sharpness": 353,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-12 (Vacances Londres Stef Cynth)\\P1020642.JPG",
+      "label": "London (Royaume-Uni) - Avril 2011",
+      "sharpness": 421,
       "width": 2560,
       "height": 1920,
       "rotationDeg": 0,
@@ -38,659 +28,199 @@
       "ocrChars": 6
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_4930.JPG",
-      "label": "Vacances Sète & Juan les pins - Mars 2010",
-      "sharpness": 533,
-      "width": 1944,
-      "height": 2592,
-      "rotationDeg": 90,
-      "ocrWords": 4,
-      "ocrChars": 10
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1120322.JPG",
-      "label": "Ban Chalong (Thaïlande) - Février 2012",
-      "sharpness": 2044,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 8,
-      "ocrChars": 17
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-01 (Russie)\\P1020086.JPG",
-      "label": "Irkutsk (RU) - Mars 2011",
-      "sharpness": 2677,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 5,
-      "ocrChars": 11
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-03-15 (Barcelone avec Mila)\\P1200820.JPG",
-      "label": "Barcelona (Espagne) - Mars 2013",
-      "sharpness": 567,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 7
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-11-05 (Vacances Tousaint Aix)\\2012-10-29 12.19.17.jpg",
-      "label": "Vacances Tousaint Aix - Octobre 2012",
-      "sharpness": 4709,
-      "width": 2448,
-      "height": 3264,
-      "rotationDeg": 0,
-      "ocrWords": 8,
-      "ocrChars": 21
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1110345.JPG",
-      "label": "Paris - Décembre 2011",
-      "sharpness": 1021,
-      "width": 1920,
-      "height": 2560,
-      "rotationDeg": 90,
-      "ocrWords": 2,
-      "ocrChars": 4
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-07-31 (Corse Steph cynth patemma)\\P1240890.JPG",
-      "label": "Ajaccio - Juillet 2013",
-      "sharpness": 707,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 16
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-05-19 (Spectacle Hip Hop)\\Nouveau dossier\\IMG_8778.JPG",
-      "label": "Nouveau dossier - Mai 2013",
-      "sharpness": 539,
-      "width": 3648,
-      "height": 2736,
-      "rotationDeg": 0,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-11-11 17.52.31.jpg",
-      "label": "2012 - Novembre 2012",
-      "sharpness": 665,
-      "width": 2448,
-      "height": 3264,
-      "rotationDeg": 0,
-      "ocrWords": 8,
-      "ocrChars": 16
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1040430.JPG",
-      "label": "Paris - Mai 2011",
-      "sharpness": 734,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-11 photos iphone\\IMG_4099.JPG",
-      "label": "Paris - Septembre 2011",
-      "sharpness": 1811,
-      "width": 2592,
-      "height": 1936,
-      "rotationDeg": 0,
-      "ocrWords": 5,
-      "ocrChars": 11
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230506.JPG",
-      "label": "San Francisco (USA) - Juin 2013",
-      "sharpness": 566,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1140831.JPG",
-      "label": "Bangkok (Thaïlande) - Mars 2012",
-      "sharpness": 627,
-      "width": 1920,
-      "height": 2560,
-      "rotationDeg": 90,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-03-07 (vacances Seville)\\IMG_4632.JPG",
-      "label": "Vacances Seville - Mars 2010",
-      "sharpness": 2576,
-      "width": 2592,
-      "height": 1944,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 8
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230728.JPG",
-      "label": "San Francisco (USA) - Juin 2013",
-      "sharpness": 3377,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 13,
-      "ocrChars": 33
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210399.JPG",
-      "label": "Royan - Mai 2013",
-      "sharpness": 495,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 19
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230368.JPG",
-      "label": "Santa Cruz (USA) - Juin 2013",
-      "sharpness": 918,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 10,
-      "ocrChars": 24
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-10 (iphone)\\IMG_0252.JPG",
-      "label": "Breuillet - Avril 2010",
-      "sharpness": 1862,
-      "width": 1536,
-      "height": 2048,
-      "rotationDeg": 90,
-      "ocrWords": 3,
-      "ocrChars": 7
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-10-04 17.01.26.jpg",
-      "label": "2012 - Octobre 2012",
-      "sharpness": 949,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\IMG_1659.jpg",
+      "label": "Phra Nakhon Si Ayutthaya (Thaïlande) - Mars 2012",
+      "sharpness": 2492,
       "width": 3264,
       "height": 2448,
       "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 6
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210489.JPG",
-      "label": "Royan - Mai 2013",
-      "sharpness": 948,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 9,
-      "ocrChars": 21
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-09-02 (vacances Bulgarie)\\stef\\IMG_3635.JPG",
-      "label": "Plovdiv (Bulgarie) - Août 2011",
-      "sharpness": 1405,
-      "width": 2592,
-      "height": 1936,
-      "rotationDeg": 0,
-      "ocrWords": 9,
-      "ocrChars": 19
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-30 (vacances toussaint moelan sur mer)\\P1100208.JPG",
-      "label": "Concarneau - Octobre 2011",
-      "sharpness": 461,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 11,
-      "ocrChars": 26
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\photos yana Paris\\DSCF4120.JPG",
-      "label": "Snimki Yana i Rumen - Juin 2010",
-      "sharpness": 473,
-      "width": 2816,
-      "height": 2112,
-      "rotationDeg": 0,
-      "ocrWords": 1,
-      "ocrChars": 3
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1120626.JPG",
-      "label": "Phuket (Thaïlande) - Février 2012",
-      "sharpness": 649,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 6
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-07 vacances Bulgarie\\P1080323.JPG",
-      "label": "Berkovitsa (Bulgarie) - Août 2011",
-      "sharpness": 820,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 15
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210381.JPG",
-      "label": "Royan - Mai 2013",
-      "sharpness": 544,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 12,
-      "ocrChars": 33
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210382.JPG",
-      "label": "Royan - Mai 2013",
-      "sharpness": 764,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 9,
+      "ocrWords": 10,
       "ocrChars": 22
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030293.JPG",
-      "label": "Royan - Avril 2011",
-      "sharpness": 660,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030705.JPG",
-      "label": "Rochefort - Avril 2011",
-      "sharpness": 610,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 4
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\Photos Dune\\PhotosDune\\2015-03-08 21.28.05.jpg",
-      "label": "Paris - Mars 2015",
-      "sharpness": 958,
-      "width": 3264,
-      "height": 2448,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-03-07 (vacances Seville)\\IMG_5096.JPG",
-      "label": "Vacances Seville - Mars 2010",
-      "sharpness": 676,
-      "width": 1944,
-      "height": 2592,
-      "rotationDeg": 90,
-      "ocrWords": 11,
-      "ocrChars": 26
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1240115.JPG",
-      "label": "Santa Rosa (USA) - Juin 2013",
-      "sharpness": 1518,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 8
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-10-09 11.20.20.jpg",
-      "label": "2012 - 2012",
-      "sharpness": 554,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-08 (vacances luberon et juan)\\photos patemma juan 2011\\P1110729.jpg",
+      "label": "Vacances luberon et juan - Août 2011",
+      "sharpness": 937,
       "width": 1536,
-      "height": 1536,
+      "height": 2048,
       "rotationDeg": 0,
-      "ocrWords": 6,
-      "ocrChars": 13
+      "ocrWords": 9,
+      "ocrChars": 20
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1240226.JPG",
-      "label": "Napa (USA) - Juin 2013",
-      "sharpness": 1902,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-06 (spectacle danse mila, vacances corse, luberon, juan, anniv 80 claude)\\P1060564.JPG",
+      "label": "Ajaccio - Juillet 2011",
+      "sharpness": 1042,
       "width": 2560,
       "height": 1920,
       "rotationDeg": 0,
       "ocrWords": 8,
-      "ocrChars": 19
+      "ocrChars": 16
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230832.JPG",
-      "label": "San Francisco (USA) - Juin 2013",
-      "sharpness": 1853,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 6,
-      "ocrChars": 14
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1140474.JPG",
-      "label": "Bangkok (Thaïlande) - Mars 2012",
-      "sharpness": 537,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-11-23 20.15.27.jpg",
-      "label": "2012 - Novembre 2012",
-      "sharpness": 448,
-      "width": 3264,
-      "height": 2448,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 6
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-30 (vacances toussaint moelan sur mer)\\P1090994.JPG",
-      "label": "Lorient - Octobre 2011",
-      "sharpness": 426,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1050099.JPG",
-      "label": "Paris - Mai 2011",
-      "sharpness": 2224,
-      "width": 4176,
-      "height": 2784,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 6
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-08-30 A trier\\IMG_7126.JPG",
-      "label": "A trier - Juillet 2010",
-      "sharpness": 697,
-      "width": 2592,
-      "height": 1944,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 4
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-09-21 16.19.02.jpg",
-      "label": "Paris - Septembre 2012",
-      "sharpness": 1155,
-      "width": 1152,
-      "height": 864,
-      "rotationDeg": 0,
-      "ocrWords": 6,
-      "ocrChars": 12
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1210754.JPG",
-      "label": "San Francisco (USA) - Juin 2013",
-      "sharpness": 2322,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 8
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\IMG_1452.JPG",
-      "label": "Le Bugue - Avril 2011",
-      "sharpness": 516,
-      "width": 2592,
-      "height": 1936,
-      "rotationDeg": 0,
-      "ocrWords": 5,
-      "ocrChars": 15
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-12-13 16.16.52.jpg",
-      "label": "Lyon - Décembre 2012",
-      "sharpness": 340,
-      "width": 2448,
-      "height": 3264,
-      "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\Yana i rumen 20-06-2011\\DSCF4138.JPG",
-      "label": "Yana i rumen - Juin 2010",
-      "sharpness": 366,
-      "width": 2816,
-      "height": 2112,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 4
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030025.JPG",
-      "label": "Sarlat-la-Canéda - Avril 2011",
-      "sharpness": 306,
-      "width": 1920,
-      "height": 2560,
-      "rotationDeg": 90,
-      "ocrWords": 5,
-      "ocrChars": 11
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-10-09 11.21.52.jpg",
-      "label": "2012 - 2012",
-      "sharpness": 392,
-      "width": 1536,
-      "height": 1536,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 26
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-11-13 (Anniv mila 9 ans)\\IMGP0644.JPG",
-      "label": "Anniv mila 9 ans - Novembre 2011",
-      "sharpness": 576,
-      "width": 4288,
-      "height": 2848,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210452.JPG",
-      "label": "Royan - Mai 2013",
-      "sharpness": 839,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 5,
-      "ocrChars": 13
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-03-07 (vacances Seville)\\IMG_4080.JPG",
-      "label": "Vacances Seville - Février 2010",
-      "sharpness": 540,
-      "width": 2592,
-      "height": 1944,
-      "rotationDeg": 0,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-01-16 (iphone X Steph)\\Steph 1117.JPG",
-      "label": "Irákleion (Grèce) - Août 2019",
-      "sharpness": 3638,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 8
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\2019-05-08 (Xiaomi Sonia)\\IMG_20190425_074513.jpg",
-      "label": "Los Angeles (USA) - Avril 2019",
-      "sharpness": 353,
-      "width": 4000,
-      "height": 3000,
-      "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-12b (iPhone 14 So)\\IMG_9791.HEIC",
-      "label": "Paris - Janvier 2024",
-      "sharpness": 1043,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 9
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-11-30 16.04.42.jpg",
-      "label": "Tangier (Maroc) - Novembre 2015",
-      "sharpness": 541,
-      "width": 2448,
-      "height": 3264,
-      "rotationDeg": 0,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_5208.HEIC",
-      "label": "Paris - Janvier 2024",
-      "sharpness": 1529,
-      "width": 5712,
-      "height": 4284,
-      "rotationDeg": 0,
-      "ocrWords": 4,
-      "ocrChars": 11
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_1772.HEIC",
-      "label": "Gallipoli (Italie) - Août 2023",
-      "sharpness": 2534,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 4,
-      "ocrChars": 13
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\OTPE1758.JPG",
-      "label": "2022 - Mai 2021",
-      "sharpness": 2204,
-      "width": 2160,
-      "height": 3840,
-      "rotationDeg": 90,
-      "ocrWords": 10,
-      "ocrChars": 31
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 14 - So\\IMG_6170.HEIC",
-      "label": "Montpellier - Juin 2023",
-      "sharpness": 555,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 0,
-      "ocrWords": 10,
-      "ocrChars": 21
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-12-02 20.18.47.jpg",
-      "label": "2015 - Décembre 2015",
-      "sharpness": 1119,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\Appart Cachan\\DSC00206.JPG",
+      "label": "Appart Cachan - Août 2010",
+      "sharpness": 578,
       "width": 1600,
       "height": 1200,
       "rotationDeg": 0,
       "ocrWords": 5,
-      "ocrChars": 14
+      "ocrChars": 11
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\2019-05-08 (Xiaomi Sonia)\\IMG_20190507_122856.jpg",
-      "label": "Paris - Mai 2019",
-      "sharpness": 575,
-      "width": 4000,
-      "height": 3000,
-      "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_5886.jpeg",
-      "label": "Paris - Novembre 2019",
-      "sharpness": 956,
-      "width": 4032,
-      "height": 3024,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\Yana i rumen 20-06-2011\\DSCF4236.JPG",
+      "label": "Yana i rumen - Juin 2010",
+      "sharpness": 340,
+      "width": 2816,
+      "height": 2112,
       "rotationDeg": 0,
       "ocrWords": 1,
       "ocrChars": 2
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_9835.heic",
-      "label": "Pornichet - Juillet 2020",
-      "sharpness": 987,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1120793.JPG",
+      "label": "Patong Beach (Thaïlande) - Février 2012",
+      "sharpness": 1219,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 8
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2006\\2006-07-10 (WE Belgique)\\So & steph\\P_PICT7429.JPG",
+      "label": "So & steph - Juin 2006",
+      "sharpness": 302,
+      "width": 1536,
+      "height": 2048,
+      "rotationDeg": 0,
+      "ocrWords": 0,
+      "ocrChars": 0
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-08-01 14.09.53.jpg",
+      "label": "Korçë (AL) - Août 2016",
+      "sharpness": 707,
       "width": 4032,
       "height": 3024,
       "rotationDeg": 0,
+      "ocrWords": 6,
+      "ocrChars": 15
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-30 17.00.12.jpg",
+      "label": "Skopje (MK) - Juillet 2016",
+      "sharpness": 952,
+      "width": 2576,
+      "height": 1932,
+      "rotationDeg": 180,
       "ocrWords": 3,
       "ocrChars": 8
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 13 pro Steph\\IMG_8950.HEIC",
-      "label": "Austin (USA) - Mars 2023",
-      "sharpness": 1290,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-24 23.32.43.jpg",
+      "label": "Paris - Septembre 2016",
+      "sharpness": 591,
       "width": 4032,
       "height": 3024,
       "rotationDeg": 0,
-      "ocrWords": 14,
-      "ocrChars": 59
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\IMG_9784.HEIC",
-      "label": "Paris - Novembre 2022",
-      "sharpness": 524,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 30
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\IMG_9837.JPG",
-      "label": "Rouen - Mai 2021",
-      "sharpness": 377,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 90,
       "ocrWords": 0,
       "ocrChars": 0
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-06-21 (USA)\\IMG_5073.JPG",
-      "label": "Los Angeles (USA) - Juin 2015",
-      "sharpness": 1216,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-11 (iphone)\\IMG_4697.JPG",
+      "label": "Breuillet - Novembre 2011",
+      "sharpness": 441,
+      "width": 1936,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 2,
+      "ocrChars": 5
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-30 13.22.19.jpg",
+      "label": "Sofia (Bulgarie) - Juillet 2016",
+      "sharpness": 572,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 7
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-23 09.56.42.jpg",
+      "label": "Algiers (DZ) - Octobre 2016",
+      "sharpness": 514,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 2,
+      "ocrChars": 4
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-01 (Russie)\\P1010646.JPG",
+      "label": "Krasnoyarsk (RU) - Mars 2011",
+      "sharpness": 759,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 3,
+      "ocrChars": 7
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-21 (anniv 40 ans Pascale)\\P1040798.JPG",
+      "label": "Saint-Germain-en-Laye - Mai 2011",
+      "sharpness": 495,
+      "width": 1920,
+      "height": 2560,
+      "rotationDeg": 90,
+      "ocrWords": 2,
+      "ocrChars": 6
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-25 13.47.29-1.jpg",
+      "label": "Chargements appareil photo - 2016",
+      "sharpness": 989,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 11,
+      "ocrChars": 64
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030192.JPG",
+      "label": "Royan - Avril 2011",
+      "sharpness": 2252,
+      "width": 1920,
+      "height": 2560,
+      "rotationDeg": 90,
+      "ocrWords": 11,
+      "ocrChars": 30
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0529.JPG",
+      "label": "Vannes - Octobre 2010",
+      "sharpness": 952,
+      "width": 2048,
+      "height": 1536,
+      "rotationDeg": 0,
+      "ocrWords": 11,
+      "ocrChars": 24
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-06 (spectacle danse mila, vacances corse, luberon, juan, anniv 80 claude)\\P1070763.JPG",
+      "label": "Taggia (Italie) - Août 2011",
+      "sharpness": 1096,
+      "width": 1920,
+      "height": 2560,
+      "rotationDeg": 90,
+      "ocrWords": 9,
+      "ocrChars": 19
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-20 17.15.48.jpg",
+      "label": "Chargements appareil photo - 2016",
+      "sharpness": 389,
       "width": 3264,
       "height": 2448,
       "rotationDeg": 0,
@@ -698,311 +228,781 @@
       "ocrChars": 2
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-01-21 08.52.56.jpg",
-      "label": "Tangier (Maroc) - Janvier 2015",
-      "sharpness": 380,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-26 17.25.32.jpg",
+      "label": "Tangier (Maroc) - Juillet 2016",
+      "sharpness": 574,
       "width": 3264,
       "height": 2448,
       "rotationDeg": 0,
-      "ocrWords": 0,
-      "ocrChars": 0
+      "ocrWords": 1,
+      "ocrChars": 4
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2021\\2021-08-16 (Photos Espagne)\\05 08 2021\\IMG_8505.JPG",
-      "label": "2021 - Juillet 2021",
-      "sharpness": 373,
-      "width": 3456,
-      "height": 5184,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-29 15.47.48 HDR.jpg",
+      "label": "München (Allemagne) - Juillet 2016",
+      "sharpness": 1090,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 7,
+      "ocrChars": 17
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-08 (vacances luberon et juan)\\IMG_2948.JPG",
+      "label": "Saint-Rémy-de-Provence - Juillet 2011",
+      "sharpness": 540,
+      "width": 2592,
+      "height": 1936,
+      "rotationDeg": 0,
+      "ocrWords": 7,
+      "ocrChars": 15
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\photos bidouilles\\Lumix\\2015-01-15 22.38.06.jpg",
+      "label": "Paris - Janvier 2015",
+      "sharpness": 773,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1130062.JPG",
+      "label": "Phuket (Thaïlande) - Février 2012",
+      "sharpness": 718,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 8,
+      "ocrChars": 18
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_5911.JPG",
+      "label": "Vacances Sète & Juan les pins - Avril 2010",
+      "sharpness": 1322,
+      "width": 1944,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 11,
+      "ocrChars": 25
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-01 09.07.35.jpg",
+      "label": "Paris - Septembre 2016",
+      "sharpness": 1542,
+      "width": 3024,
+      "height": 4032,
       "rotationDeg": 90,
       "ocrWords": 1,
       "ocrChars": 3
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2026\\IPhone 14 So (2026-06-28)\\IMG_0321.HEIC",
-      "label": "Rouen - Octobre 2025",
-      "sharpness": 3746,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 10,
-      "ocrChars": 21
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_3628.JPG",
-      "label": "Sofia (Bulgarie) - Août 2022",
-      "sharpness": 2131,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 6
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-12b (iPhone 14 So)\\IMG_8049.HEIC",
-      "label": "Vienna (Autriche) - Septembre 2023",
-      "sharpness": 1733,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 0,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\IMG_1265.jpg",
+      "label": "Phuket (Thaïlande) - Février 2012",
+      "sharpness": 932,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 270,
       "ocrWords": 4,
-      "ocrChars": 11
+      "ocrChars": 8
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_5079.HEIC",
-      "label": "Paris - Janvier 2024",
-      "sharpness": 451,
-      "width": 4032,
-      "height": 3024,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-03-07 (vacances Seville)\\IMG_4403.JPG",
+      "label": "Vacances Seville - Mars 2010",
+      "sharpness": 726,
+      "width": 2592,
+      "height": 1944,
       "rotationDeg": 0,
-      "ocrWords": 4,
-      "ocrChars": 11
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\2019-05-08 (Xiaomi Sonia)\\IMG_20190325_200042.jpg",
-      "label": "Paris - Mars 2019",
-      "sharpness": 1193,
-      "width": 4000,
-      "height": 3000,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 7
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-01-16 (iphone X Steph)\\Steph 1951.JPG",
-      "label": "İstanbul (Turquie) - Octobre 2019",
-      "sharpness": 1514,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 15
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_6963.JPG",
-      "label": "Zanzibar (Tanzanie) - Décembre 2022",
-      "sharpness": 4378,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 90,
-      "ocrWords": 12,
+      "ocrWords": 13,
       "ocrChars": 29
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_1819.JPG",
-      "label": "Versailles - Mai 2022",
-      "sharpness": 913,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 90,
-      "ocrWords": 5,
-      "ocrChars": 12
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-08-10 (Bulgarie)\\P1360912.JPG",
-      "label": "Varna (Bulgarie) - Août 2015",
-      "sharpness": 1674,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1100492.JPG",
+      "label": "Saint-Quentin-en-Yvelines - Novembre 2011",
+      "sharpness": 807,
       "width": 2560,
       "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 9,
-      "ocrChars": 19
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-08-31 (Vacances été Pouilles Corse)\\DSC00506.JPG",
-      "label": "Vacances été Pouilles Corse - Juillet 2023",
-      "sharpness": 486,
-      "width": 3648,
-      "height": 5472,
-      "rotationDeg": 90,
-      "ocrWords": 0,
-      "ocrChars": 0
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-11-28 12.10.58.jpg",
-      "label": "2015 - Décembre 2015",
-      "sharpness": 1885,
-      "width": 1600,
-      "height": 900,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 7
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_3295.JPG",
-      "label": "Cork (Irlande) - Juillet 2022",
-      "sharpness": 1142,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 6,
-      "ocrChars": 13
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_7373.JPG",
-      "label": "Baza (Espagne) - Août 2021",
-      "sharpness": 2103,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
-      "ocrWords": 7,
-      "ocrChars": 15
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_5802.HEIC",
-      "label": "Paris - Avril 2024",
-      "sharpness": 2739,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 0,
-      "ocrWords": 6,
-      "ocrChars": 13
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_3066.JPG",
-      "label": "Cork (Irlande) - Juillet 2022",
-      "sharpness": 1004,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 90,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_6606.JPG",
-      "label": "Dar es Salaam (Tanzanie) - Décembre 2022",
-      "sharpness": 384,
-      "width": 3024,
-      "height": 4032,
-      "rotationDeg": 90,
-      "ocrWords": 1,
-      "ocrChars": 2
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2026\\IPhone 14 So (2026-06-28)\\IMG_8904.HEIC",
-      "label": "Ayvalık (Turquie) - Août 2025",
-      "sharpness": 401,
-      "width": 4032,
-      "height": 3024,
       "rotationDeg": 0,
       "ocrWords": 4,
       "ocrChars": 9
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\IMG_2289.JPG",
-      "label": "Breuillet - Décembre 2019",
-      "sharpness": 709,
-      "width": 3264,
-      "height": 2448,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-10-31 22.11.53.jpg",
+      "label": "Paris - Octobre 2017",
+      "sharpness": 334,
+      "width": 4032,
+      "height": 3024,
       "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 8
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-06-21 (USA)\\2015-06-17 20.49.08.jpg",
-      "label": "New York City (USA) - Juin 2015",
-      "sharpness": 481,
-      "width": 2448,
-      "height": 3264,
-      "rotationDeg": 0,
-      "ocrWords": 3,
-      "ocrChars": 7
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\IMG_E0945.JPG",
-      "label": "Paris - Septembre 2019",
-      "sharpness": 705,
-      "width": 3264,
-      "height": 2448,
-      "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 7
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-08-01 (Drome Patemma et Port Sud)\\IMG_6810.JPG",
-      "label": "Drome Patemma et Port Sud - Juillet 2020",
-      "sharpness": 1572,
-      "width": 3456,
-      "height": 5184,
-      "rotationDeg": 90,
       "ocrWords": 5,
-      "ocrChars": 12
+      "ocrChars": 10
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-10-25 (vacances toussaint patemma)\\_IGP8122.JPG",
-      "label": "Vacances toussaint patemma - Octobre 2015",
-      "sharpness": 482,
-      "width": 1728,
-      "height": 1152,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0434.JPG",
+      "label": "Questembert - Octobre 2010",
+      "sharpness": 948,
+      "width": 2048,
+      "height": 1536,
       "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
+      "ocrWords": 4,
+      "ocrChars": 9
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_3268.JPG",
-      "label": "Cork (Irlande) - Juillet 2022",
-      "sharpness": 938,
-      "width": 4032,
-      "height": 3024,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-08-01 12.26.22.jpg",
+      "label": "Ohrid (MK) - Août 2016",
+      "sharpness": 311,
+      "width": 3264,
+      "height": 2448,
       "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
+      "ocrWords": 3,
+      "ocrChars": 7
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2026\\IPhone 14 So (2026-06-28)\\IMG_9304.HEIC",
-      "label": "İzmir (Turquie) - Août 2025",
-      "sharpness": 2428,
-      "width": 4032,
-      "height": 3024,
-      "rotationDeg": 0,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-11 photos iphone\\IMG_3993.JPG",
+      "label": "Paris - Septembre 2011",
+      "sharpness": 803,
+      "width": 1936,
+      "height": 2592,
+      "rotationDeg": 90,
       "ocrWords": 8,
+      "ocrChars": 18
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\Yana and Rumen\\DSCF3422.jpg",
+      "label": "Yana and Rumen - Juin 2010",
+      "sharpness": 1629,
+      "width": 2112,
+      "height": 2816,
+      "rotationDeg": 0,
+      "ocrWords": 7,
       "ocrChars": 17
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-08-31 (Vacances été Pouilles Corse)\\DSC00936.JPG",
-      "label": "Vacances été Pouilles Corse - Août 2023",
-      "sharpness": 2740,
-      "width": 5472,
-      "height": 3648,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-06 (spectacle danse mila, vacances corse, luberon, juan, anniv 80 claude)\\P1070391.JPG",
+      "label": "Roussillon - Juillet 2011",
+      "sharpness": 1833,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 9,
+      "ocrChars": 18
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1130415.JPG",
+      "label": "Chiang Mai (Thaïlande) - Février 2012",
+      "sharpness": 372,
+      "width": 1920,
+      "height": 2560,
+      "rotationDeg": 90,
+      "ocrWords": 5,
+      "ocrChars": 13
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-08-31 12.10.57.jpg",
+      "label": "Paris - Août 2016",
+      "sharpness": 802,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 10
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1040939.JPG",
+      "label": "Paris - Mai 2011",
+      "sharpness": 1440,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 8,
+      "ocrChars": 19
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-11-05 21.48.47.jpg",
+      "label": "Paris - Novembre 2016",
+      "sharpness": 506,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 7,
+      "ocrChars": 14
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\IMG_1475.jpg",
+      "label": "Chiang Mai (Thaïlande) - Février 2012",
+      "sharpness": 1789,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 90,
+      "ocrWords": 8,
+      "ocrChars": 20
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1110276.JPG",
+      "label": "Paris - Décembre 2011",
+      "sharpness": 678,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 3,
+      "ocrChars": 7
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-08 (vacances luberon et juan)\\IMG_2859.JPG",
+      "label": "Roussillon - Juillet 2011",
+      "sharpness": 810,
+      "width": 1936,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 5,
+      "ocrChars": 11
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-01 (Russie)\\P1010357.JPG",
+      "label": "Russie - Mars 2011",
+      "sharpness": 546,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 6
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1130130.JPG",
+      "label": "Chiang Mai (Thaïlande) - Février 2012",
+      "sharpness": 682,
+      "width": 1920,
+      "height": 2560,
+      "rotationDeg": 90,
+      "ocrWords": 6,
+      "ocrChars": 16
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-09-27 16.06.28.jpg",
+      "label": "Paris - Septembre 2017",
+      "sharpness": 584,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-03-15 22.05.42.jpg",
+      "label": "Austin (USA) - Mars 2017",
+      "sharpness": 724,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-22 01.22.05.jpg",
+      "label": "Tangier (Maroc) - Juillet 2016",
+      "sharpness": 582,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-03-07 (vacances Seville)\\IMG_4719.JPG",
+      "label": "Vacances Seville - Mars 2010",
+      "sharpness": 1007,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "ocrWords": 3,
+      "ocrChars": 7
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-23 15.22.07.jpg",
+      "label": "Chargements appareil photo - 2016",
+      "sharpness": 399,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 9,
+      "ocrChars": 59
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-03-07 (vacances Seville)\\IMG_4856.JPG",
+      "label": "Vacances Seville - Mars 2010",
+      "sharpness": 745,
+      "width": 1944,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 6,
+      "ocrChars": 15
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_5894.JPG",
+      "label": "Vacances Sète & Juan les pins - Avril 2010",
+      "sharpness": 1897,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "ocrWords": 7,
+      "ocrChars": 14
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-03-05 iphone\\IMG_0526.JPG",
+      "label": "Paris - Février 2011",
+      "sharpness": 475,
+      "width": 1936,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\Yana i rumen 20-06-2011\\DSCF4515.JPG",
+      "label": "Yana i rumen - Juin 2010",
+      "sharpness": 508,
+      "width": 2816,
+      "height": 2112,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 3
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_6045.JPG",
+      "label": "Vacances Sète & Juan les pins - Avril 2010",
+      "sharpness": 1244,
+      "width": 2592,
+      "height": 1944,
       "rotationDeg": 0,
       "ocrWords": 9,
       "ocrChars": 23
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\2019-05-08 (Xiaomi Sonia)\\IMG_20190105_235034.jpg",
-      "label": "Paris - Janvier 2019",
-      "sharpness": 716,
-      "width": 4000,
-      "height": 3000,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-10 (iphone)\\IMG_0258.JPG",
+      "label": "Breuillet - Avril 2010",
+      "sharpness": 1249,
+      "width": 2048,
+      "height": 1536,
       "rotationDeg": 0,
-      "ocrWords": 2,
-      "ocrChars": 5
+      "ocrWords": 12,
+      "ocrChars": 27
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-11-29 18.04.35.jpg",
-      "label": "Paris - Novembre 2015",
-      "sharpness": 972,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1050181.JPG",
+      "label": "Paris - Mai 2011",
+      "sharpness": 753,
+      "width": 4176,
+      "height": 2784,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 12
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-30 14.34.56.jpg",
+      "label": "Algiers (DZ) - Octobre 2016",
+      "sharpness": 1667,
       "width": 3024,
       "height": 4032,
-      "rotationDeg": 0,
-      "ocrWords": 9,
-      "ocrChars": 29
+      "rotationDeg": 90,
+      "ocrWords": 7,
+      "ocrChars": 20
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_2845.JPG",
-      "label": "Paris - Juillet 2022",
-      "sharpness": 1164,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-25 14.58.40.jpg",
+      "label": "Constantine (DZ) - Octobre 2016",
+      "sharpness": 3704,
       "width": 4032,
       "height": 3024,
       "rotationDeg": 0,
-      "ocrWords": 11,
-      "ocrChars": 25
+      "ocrWords": 7,
+      "ocrChars": 17
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-11-11 08.26.41.jpg",
-      "label": "Tangier (Maroc) - Novembre 2015",
-      "sharpness": 1077,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-29 16.51.40.jpg",
+      "label": "München (Allemagne) - Juillet 2016",
+      "sharpness": 2329,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 4
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-09-15 14.16.30.jpg",
+      "label": "Saint-Quentin-en-Yvelines - Septembre 2017",
+      "sharpness": 1062,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 9,
+      "ocrChars": 19
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-11-26 10.35.57.jpg",
+      "label": "Zell am See (Autriche) - Novembre 2016",
+      "sharpness": 1096,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 1,
+      "ocrChars": 4
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-29 16.55.21.jpg",
+      "label": "München (Allemagne) - Juillet 2016",
+      "sharpness": 1373,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 8
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-03-05 iphone\\IMG_0407.JPG",
+      "label": "Paris - Février 2011",
+      "sharpness": 2367,
+      "width": 2592,
+      "height": 1936,
+      "rotationDeg": 0,
+      "ocrWords": 9,
+      "ocrChars": 20
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\photos yana Paris\\DSCF3780.JPG",
+      "label": "Snimki Yana i Rumen - Juin 2010",
+      "sharpness": 366,
+      "width": 2816,
+      "height": 2112,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 9
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_4804.JPG",
+      "label": "Vacances Sète & Juan les pins - Mars 2010",
+      "sharpness": 437,
+      "width": 1944,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 3,
+      "ocrChars": 6
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-02-22 (vacances Prague)\\IMG_3679.JPG",
+      "label": "Vacances Prague - Février 2010",
+      "sharpness": 454,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "ocrWords": 5,
+      "ocrChars": 10
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-03-09 15.41.23.jpg",
+      "label": "Versailles - Mars 2017",
+      "sharpness": 567,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 6,
+      "ocrChars": 14
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-07 vacances Bulgarie\\P1090404.JPG",
+      "label": "Varna (Bulgarie) - Août 2011",
+      "sharpness": 965,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 7,
+      "ocrChars": 19
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-24 17.16.19-1.jpg",
+      "label": "Algiers (DZ) - Octobre 2016",
+      "sharpness": 427,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 7,
+      "ocrChars": 16
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-07-26 (corse)\\P1070361.JPG",
+      "label": "Ajaccio - Juillet 2011",
+      "sharpness": 722,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 6,
+      "ocrChars": 15
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1050174.JPG",
+      "label": "Paris - Mai 2011",
+      "sharpness": 1731,
+      "width": 4176,
+      "height": 2784,
+      "rotationDeg": 0,
+      "ocrWords": 11,
+      "ocrChars": 28
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-24 12.27.36.jpg",
+      "label": "Tangier (Maroc) - Juillet 2016",
+      "sharpness": 505,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 10
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-01 (Russie)\\P1010456.JPG",
+      "label": "Russie - Mars 2011",
+      "sharpness": 895,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 13,
+      "ocrChars": 32
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-11-19 03.49.27.jpg",
+      "label": "Paris - Novembre 2016",
+      "sharpness": 594,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 8
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-15 12.32.04.jpg",
+      "label": "Paris - Juillet 2016",
+      "sharpness": 5497,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 4,
+      "ocrChars": 11
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-11 photos iphone\\IMG_3798.JPG",
+      "label": "Plovdiv (Bulgarie) - Août 2011",
+      "sharpness": 544,
+      "width": 1936,
+      "height": 2592,
+      "rotationDeg": 90,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\P1340047.JPG",
+      "label": "Chargements appareil photo - Octobre 2014",
+      "sharpness": 412,
+      "width": 2048,
+      "height": 1536,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 3
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1040370.JPG",
+      "label": "Paris - Mai 2011",
+      "sharpness": 2529,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 7,
+      "ocrChars": 19
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-11-11 21.07.01.jpg",
+      "label": "Paris - Novembre 2017",
+      "sharpness": 383,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 4
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-11 photos iphone\\IMG_3857.JPG",
+      "label": "Burgas (Bulgarie) - Août 2011",
+      "sharpness": 1546,
+      "width": 2592,
+      "height": 1936,
+      "rotationDeg": 0,
+      "ocrWords": 3,
+      "ocrChars": 6
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-31 15.52.51.jpg",
+      "label": "Ohrid (MK) - Juillet 2016",
+      "sharpness": 1294,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 4
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-30 (vacances toussaint moelan sur mer)\\P1090822.JPG",
+      "label": "Pont-Aven - Octobre 2011",
+      "sharpness": 2673,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 10,
+      "ocrChars": 21
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-08-27 11.27.22.jpg",
+      "label": "Chargements appareil photo - Août 2016",
+      "sharpness": 1298,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 6
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-16 15.09.04.jpg",
+      "label": "Paris - Juillet 2016",
+      "sharpness": 549,
       "width": 2448,
       "height": 3264,
+      "rotationDeg": 0,
+      "ocrWords": 5,
+      "ocrChars": 13
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\photos bidouilles\\Lumix\\2015-01-15 20.54.36.jpg",
+      "label": "Paris - Janvier 2015",
+      "sharpness": 526,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 0,
+      "ocrWords": 0,
+      "ocrChars": 0
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1130562.JPG",
+      "label": "Chiang Mai (Thaïlande) - Février 2012",
+      "sharpness": 1553,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 3,
+      "ocrChars": 6
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2018-01-30 20.41.29.jpg",
+      "label": "Paris - Janvier 2018",
+      "sharpness": 1169,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0425.JPG",
+      "label": "Vannes - Octobre 2010",
+      "sharpness": 446,
+      "width": 1536,
+      "height": 2048,
+      "rotationDeg": 90,
+      "ocrWords": 9,
+      "ocrChars": 36
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-31 16.08.54.jpg",
+      "label": "Ohrid (MK) - Juillet 2016",
+      "sharpness": 359,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-29\\IMG_1755.JPG",
+      "label": "Paris - Avril 2011",
+      "sharpness": 578,
+      "width": 2592,
+      "height": 1936,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\IMG_8178.JPG",
+      "label": "Versailles - Décembre 2016",
+      "sharpness": 830,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 2,
+      "ocrChars": 4
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-25 15.07.21.jpg",
+      "label": "Chargements appareil photo - Octobre 2016",
+      "sharpness": 648,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 3,
+      "ocrChars": 7
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-06 (spectacle danse mila, vacances corse, luberon, juan, anniv 80 claude)\\P1060019.JPG",
+      "label": "Spectacle danse mila, vacances corse, luberon, juan, anniv 80 claude - Juin 2011",
+      "sharpness": 473,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-03-13 11.17.16.jpg",
+      "label": "Austin (USA) - Mars 2017",
+      "sharpness": 806,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-24 21.43.25.jpg",
+      "label": "Paris - Septembre 2016",
+      "sharpness": 520,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "ocrWords": 1,
+      "ocrChars": 2
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-26 11.26.22.jpg",
+      "label": "Constantine (DZ) - Octobre 2016",
+      "sharpness": 2207,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 0,
+      "ocrChars": 0
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-02-20 (Noel, naissance Dune, nouvel an chinois)\\IMG_1078.JPG",
+      "label": "Paris - Février 2012",
+      "sharpness": 308,
+      "width": 3264,
+      "height": 2448,
       "rotationDeg": 0,
       "ocrWords": 0,
       "ocrChars": 0
@@ -1010,73 +1010,474 @@
   ],
   "rejected": [
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-12-01 (photos iphone so)\\IMG_0608.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 196 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2017\\2017-08-26 (Vacances Périgord)\\IMG_6546.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 268 < 300)",
       "sharpness": 0,
-      "width": 2048,
-      "height": 1536,
+      "width": 5184,
+      "height": 3456,
       "rotationDeg": 0,
-      "label": "Paris - Juin 2013"
+      "label": "Vacances Périgord - Août 2017"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2008\\2008-02-24 (festival des OGM)\\IMG_7925.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 99 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_5045.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 222 < 300)",
       "sharpness": 0,
       "width": 2592,
       "height": 1944,
       "rotationDeg": 0,
-      "label": "Festival des OGM - Février 2008"
+      "label": "Vacances Sète & Juan les pins - Mars 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-05-27 (Tournage Comme par Magie)\\P1050188.JPG",
-      "reason": "Contient trop de texte (OCR : 17 mots, 40 caract.)",
-      "sharpness": 1254,
-      "width": 4176,
-      "height": 2784,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_5867.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 296 < 300)",
+      "sharpness": 0,
+      "width": 2592,
+      "height": 1944,
       "rotationDeg": 0,
-      "ocrWords": 17,
-      "ocrChars": 40,
-      "label": "Paris - Mai 2011"
+      "label": "Vacances Sète & Juan les pins - Avril 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-12-20 (spectacles noel)\\P1200003.JPG",
-      "reason": "Contient trop de texte (OCR : 15 mots, 45 caract.)",
-      "sharpness": 380,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 15,
-      "ocrChars": 45,
-      "label": "Paris - Décembre 2012"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-07-23 12.18.09.jpg",
-      "reason": "Image trop floue ou plate (Netteté: 63 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-08-31 (vacances Corse Barbalaric Patemma)\\iphone Steph\\IMG_1941.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 230 < 300)",
       "sharpness": 0,
       "width": 2048,
       "height": 1536,
       "rotationDeg": 0,
-      "label": "Ajaccio - Juillet 2012"
+      "label": "Bastia - Août 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210135.JPG",
-      "reason": "Contient trop de texte (OCR : 20 mots, 46 caract.)",
-      "sharpness": 4443,
-      "width": 1920,
-      "height": 2560,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0356.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 172 < 300)",
+      "sharpness": 0,
+      "width": 1536,
+      "height": 2048,
       "rotationDeg": 90,
-      "ocrWords": 20,
-      "ocrChars": 46,
-      "label": "Royan - Mai 2013"
+      "label": "Vannes - Octobre 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-12-31 23.27.07-1.jpg",
-      "reason": "Image trop floue ou plate (Netteté: 267 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-02-20 (Noel, naissance Dune, nouvel an chinois)\\P1120222.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 38 < 300)",
+      "sharpness": 0,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "label": "Paris - Février 2012"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2009\\2009-10-23\\IMG_1622.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 137 < 300)",
+      "sharpness": 0,
+      "width": 2048,
+      "height": 1536,
+      "rotationDeg": 0,
+      "label": "2009 - Septembre 2009"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2007\\2007-08-31 (bulgarie photos de alaric et barbara)\\Bulg07 016 (83).jpg",
+      "reason": "Image trop floue ou plate (Netteté: 77 < 300)",
+      "sharpness": 0,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "label": "2007 - Août 2007"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-08-18 14.11.26.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 181 < 300)",
+      "sharpness": 0,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "label": "Chargements appareil photo - 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-04-07 12.00.40.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 69 < 300)",
+      "sharpness": 0,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "label": "Paris - Avril 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-27 22.53.29.jpg",
+      "reason": "Contient trop de texte (OCR : 20 mots, 67 caract.)",
+      "sharpness": 684,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 0,
+      "ocrWords": 20,
+      "ocrChars": 67,
+      "label": "Tangier (Maroc) - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-18 10.07.29.jpg",
+      "reason": "Contient trop de texte (OCR : 40 mots, 192 caract.)",
+      "sharpness": 2074,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 40,
+      "ocrChars": 192,
+      "label": "Chargements appareil photo - 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-31 13.40.18.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 217 < 300)",
+      "sharpness": 0,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 0,
+      "label": "Ohrid (MK) - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-17 13.04.08.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 246 < 300)",
+      "sharpness": 0,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "label": "Paris - Octobre 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-08-01 12.23.31.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 246 < 300)",
+      "sharpness": 0,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "label": "Ohrid (MK) - Août 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-20 12.36.37.jpg",
+      "reason": "Contient trop de texte (OCR : 80 mots, 394 caract.)",
+      "sharpness": 736,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 0,
+      "ocrWords": 80,
+      "ocrChars": 394,
+      "label": "Tangier (Maroc) - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-02-20 (Noel, naissance Dune, nouvel an chinois)\\P1120128.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 0 < 300)",
+      "sharpness": 0,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "label": "Paris - Janvier 2012"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1130669.JPG",
+      "reason": "Contient trop de texte (OCR : 15 mots, 36 caract.)",
+      "sharpness": 1680,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 15,
+      "ocrChars": 36,
+      "label": "Chiang Mai (Thaïlande) - Février 2012"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-08 (vacances luberon et juan)\\IMG_2781.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 300 < 300)",
+      "sharpness": 0,
+      "width": 2592,
+      "height": 1936,
+      "rotationDeg": 0,
+      "label": "Vacances luberon et juan - Juillet 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-25 15.31.05.jpg",
+      "reason": "Contient trop de texte (OCR : 21 mots, 90 caract.)",
+      "sharpness": 1180,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 21,
+      "ocrChars": 90,
+      "label": "Chargements appareil photo - Septembre 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-01 (Russie Isabelle)\\Transsibérien\\IMG_6255.JPG",
+      "reason": "Contient trop de texte (OCR : 19 mots, 47 caract.)",
+      "sharpness": 1867,
+      "width": 3000,
+      "height": 2000,
+      "rotationDeg": 0,
+      "ocrWords": 19,
+      "ocrChars": 47,
+      "label": "Transsibérien - Mars 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-20 16.56.38 HDR.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 275 < 300)",
+      "sharpness": 0,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "label": "Tangier (Maroc) - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-08 12.51.07.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 127 < 300)",
+      "sharpness": 0,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 90,
+      "label": "Paris - Septembre 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-03-05 (Travaux appart 708)\\P1010183.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 92 < 300)",
+      "sharpness": 0,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "label": "Paris - Février 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-08 (vacances luberon et juan)\\IMG_2836.JPG",
+      "reason": "Contient trop de texte (OCR : 23 mots, 51 caract.)",
+      "sharpness": 1956,
+      "width": 2592,
+      "height": 1936,
+      "rotationDeg": 0,
+      "ocrWords": 23,
+      "ocrChars": 51,
+      "label": "Roussillon - Juillet 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-10-07 vacances Bulgarie\\P1080713.JPG",
+      "reason": "Contient trop de texte (OCR : 25 mots, 58 caract.)",
+      "sharpness": 1065,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "ocrWords": 25,
+      "ocrChars": 58,
+      "label": "Plovdiv (Bulgarie) - Août 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-01 13.17.00.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 265 < 300)",
+      "sharpness": 0,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "label": "Paris - Septembre 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-24 12.26.25.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 86 < 300)",
       "sharpness": 0,
       "width": 2448,
       "height": 3264,
       "rotationDeg": 0,
-      "label": "Paris - Décembre 2012"
+      "label": "Tangier (Maroc) - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_5685.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 270 < 300)",
+      "sharpness": 0,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "label": "Vacances Sète & Juan les pins - Avril 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_5900.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 212 < 300)",
+      "sharpness": 0,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "label": "Vacances Sète & Juan les pins - Avril 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\Photos Kurio Mila\\IMG_20140222_171321.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 37 < 300)",
+      "sharpness": 0,
+      "width": 1600,
+      "height": 1200,
+      "rotationDeg": 0,
+      "label": "Chargements appareil photo - Février 2014"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2018-05-25 23.12.20.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 103 < 300)",
+      "sharpness": 0,
+      "width": 1408,
+      "height": 1056,
+      "rotationDeg": 0,
+      "label": "Chargements appareil photo"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2018-01-12 00.50.52.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 280 < 300)",
+      "sharpness": 0,
+      "width": 1280,
+      "height": 960,
+      "rotationDeg": 0,
+      "label": "Chargements appareil photo"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-02-22 (vacances Prague)\\IMG_3629.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 248 < 300)",
+      "sharpness": 0,
+      "width": 2592,
+      "height": 1944,
+      "rotationDeg": 0,
+      "label": "Vacances Prague - Février 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-03-15 17.34.13.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 44 < 300)",
+      "sharpness": 0,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "label": "Austin (USA) - Mars 2017"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-19 16.46.05.jpg",
+      "reason": "Résolution insuffisante (750x1334 < 800x600)",
+      "sharpness": 0,
+      "width": 750,
+      "height": 1334,
+      "rotationDeg": 0,
+      "label": "Chargements appareil photo - 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1100953.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 7 < 300)",
+      "sharpness": 0,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "label": "Paris - Décembre 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1110207.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 116 < 300)",
+      "sharpness": 0,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "label": "Paris - Décembre 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-15 12.37.36.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 151 < 300)",
+      "sharpness": 0,
+      "width": 3264,
+      "height": 2448,
+      "rotationDeg": 0,
+      "label": "Paris - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0374.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 238 < 300)",
+      "sharpness": 0,
+      "width": 1536,
+      "height": 2048,
+      "rotationDeg": 90,
+      "label": "Vannes - Octobre 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0393.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 128 < 300)",
+      "sharpness": 0,
+      "width": 2048,
+      "height": 1536,
+      "rotationDeg": 0,
+      "label": "Vannes - Octobre 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-10-25 18.56.34-2.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 130 < 300)",
+      "sharpness": 0,
+      "width": 3024,
+      "height": 4032,
+      "rotationDeg": 90,
+      "label": "Constantine (DZ) - Octobre 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-09-09 16.18.03.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 177 < 300)",
+      "sharpness": 0,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 90,
+      "label": "Paris - Septembre 2017"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1110343.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 268 < 300)",
+      "sharpness": 0,
+      "width": 1920,
+      "height": 2560,
+      "rotationDeg": 90,
+      "label": "Paris - Décembre 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0622.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 281 < 300)",
+      "sharpness": 0,
+      "width": 2048,
+      "height": 1536,
+      "rotationDeg": 0,
+      "label": "Vannes - Octobre 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0398.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 83 < 300)",
+      "sharpness": 0,
+      "width": 2048,
+      "height": 1536,
+      "rotationDeg": 0,
+      "label": "Vannes - Octobre 2010"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-08-06 (spectacle danse mila, vacances corse, luberon, juan, anniv 80 claude)\\P1060279.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 115 < 300)",
+      "sharpness": 0,
+      "width": 2560,
+      "height": 1920,
+      "rotationDeg": 0,
+      "label": "Ajaccio - Juillet 2011"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-22 19.04.33 HDR.jpg",
+      "reason": "Contient trop de texte (OCR : 22 mots, 52 caract.)",
+      "sharpness": 2372,
+      "width": 2448,
+      "height": 3264,
+      "rotationDeg": 0,
+      "ocrWords": 22,
+      "ocrChars": 52,
+      "label": "Tangier (Maroc) - Juillet 2016"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-03-13 11.23.49.jpg",
+      "reason": "Contient trop de texte (OCR : 62 mots, 299 caract.)",
+      "sharpness": 1262,
+      "width": 4032,
+      "height": 3024,
+      "rotationDeg": 0,
+      "ocrWords": 62,
+      "ocrChars": 299,
+      "label": "Austin (USA) - Mars 2017"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\Photos Kurio Mila\\IMG_20140705_205235.jpg",
+      "reason": "Résolution insuffisante (480x640 < 800x600)",
+      "sharpness": 0,
+      "width": 480,
+      "height": 640,
+      "rotationDeg": 270,
+      "label": "Chargements appareil photo - Juillet 2014"
     },
     {
       "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-04-28 (vacances Sète & Juan les pins)\\IMG_0434.JPG",
@@ -1088,264 +1489,241 @@
       "label": "Sète - Avril 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-11 (iphone)\\IMG_4272.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 245 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-11-17\\IMG_0713.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 241 < 300)",
       "sharpness": 0,
-      "width": 2592,
-      "height": 1936,
+      "width": 2048,
+      "height": 1536,
       "rotationDeg": 0,
-      "label": "Paris - Octobre 2011"
+      "label": "Carnac - Octobre 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030536.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 276 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2010\\2010-02-22 (vacances Prague)\\IMG_3362.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 37 < 300)",
       "sharpness": 0,
-      "width": 1920,
-      "height": 2560,
+      "width": 1536,
+      "height": 2048,
       "rotationDeg": 90,
-      "label": "La Rochelle - Avril 2011"
+      "label": "Vacances Prague - Février 2010"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\2012-03-05 (Vacances Thailande)\\P1140287.JPG",
-      "reason": "Contient trop de texte (OCR : 18 mots, 43 caract.)",
-      "sharpness": 520,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "ocrWords": 18,
-      "ocrChars": 43,
-      "label": "Phra Nakhon Si Ayutthaya (Thaïlande) - Mars 2012"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2012\\chargement appareil photo 2012\\2012-11-11 17.52.25.jpg",
-      "reason": "Image trop floue ou plate (Netteté: 145 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\Photos Kurio Mila\\IMG_20140531_200911.jpg",
+      "reason": "Résolution insuffisante (640x480 < 800x600)",
       "sharpness": 0,
-      "width": 3264,
-      "height": 2448,
+      "width": 640,
+      "height": 480,
       "rotationDeg": 0,
-      "label": "2012 - Novembre 2012"
+      "label": "Chargements appareil photo - Mai 2014"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230104.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 248 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-12-17\\P1110322.JPG",
+      "reason": "Image trop floue ou plate (Netteté: 65 < 300)",
       "sharpness": 0,
       "width": 2560,
       "height": 1920,
       "rotationDeg": 0,
-      "label": "San Francisco (USA) - Juin 2013"
+      "label": "Paris - Décembre 2011"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1210932.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 76 < 300)",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2017\\2017-03-12 20.39.10.jpg",
+      "reason": "Image trop floue ou plate (Netteté: 153 < 300)",
       "sharpness": 0,
-      "width": 2560,
-      "height": 1920,
+      "width": 4032,
+      "height": 3024,
       "rotationDeg": 0,
-      "label": "San Francisco (USA) - Juin 2013"
+      "label": "Austin (USA) - Mars 2017"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-05-15 (vacances Paques Royan)\\P1210353.JPG",
-      "reason": "Contient trop de texte (OCR : 15 mots, 39 caract.)",
-      "sharpness": 1973,
-      "width": 2560,
-      "height": 1920,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-07-13 18.43.24.jpg",
+      "reason": "Contient trop de texte (OCR : 102 mots, 636 caract.)",
+      "sharpness": 6081,
+      "width": 4032,
+      "height": 3024,
       "rotationDeg": 0,
-      "ocrWords": 15,
-      "ocrChars": 39,
-      "label": "Royan - Mai 2013"
+      "ocrWords": 102,
+      "ocrChars": 636,
+      "label": "Versailles - Juillet 2016"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030653.JPG",
-      "reason": "Contient trop de texte (OCR : 22 mots, 52 caract.)",
-      "sharpness": 1510,
-      "width": 2560,
-      "height": 1920,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\Chargements appareil photo\\2016\\2016-09-11 12.33.42.jpg",
+      "reason": "Contient trop de texte (OCR : 60 mots, 309 caract.)",
+      "sharpness": 1267,
+      "width": 1440,
+      "height": 2560,
       "rotationDeg": 0,
-      "ocrWords": 22,
-      "ocrChars": 52,
-      "label": "Royan - Avril 2011"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230352.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 260 < 300)",
-      "sharpness": 0,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "label": "Santa Cruz (USA) - Juin 2013"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\2011-04-24 (vacances Perigord Royan Guenka Claude)\\P1030730.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 199 < 300)",
-      "sharpness": 0,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "label": "Royan - Avril 2011"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2011\\Snimki Yana i Rumen\\Yana i rumen 20-06-2011\\DSCF4372.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 243 < 300)",
-      "sharpness": 0,
-      "width": 2816,
-      "height": 2112,
-      "rotationDeg": 0,
-      "label": "Yana i rumen - Juin 2010"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2013\\2013-06-09 (Californie)\\P1230996.JPG",
-      "reason": "Image trop floue ou plate (Netteté: 46 < 300)",
-      "sharpness": 0,
-      "width": 2560,
-      "height": 1920,
-      "rotationDeg": 0,
-      "label": "San Francisco (USA) - Juin 2013"
+      "ocrWords": 60,
+      "ocrChars": 309,
+      "label": "Chargements appareil photo - 2016"
     }
   ],
   "videos": [
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2025\\Iphone 14 So (2025-07-30)\\IMG_4033.MOV",
-      "label": "Iphone 14 So - Juillet 2025",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\IMG_3728.MOV",
+      "label": "Iphone So - Janvier 2023",
       "duration": "20s",
-      "sizeMb": 5.2,
+      "sizeMb": 4.4,
       "id": "001",
-      "filename": "IMG_4033.MOV"
+      "filename": "IMG_3728.MOV"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2008\\2008-12-24\\MVI_3200.AVI",
-      "label": "2008 - Décembre 2008",
-      "duration": "10s",
-      "sizeMb": 4.6,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\TWCP5921.mp4",
+      "label": "Iphone steph - Octobre 2020",
+      "duration": "6s",
+      "sizeMb": 0.7,
       "id": "002",
-      "filename": "MVI_3200.AVI"
+      "filename": "TWCP5921.mp4"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 13 pro Steph\\IMG_8929.MOV",
-      "label": "Iphone 13 pro Steph - Juillet 2023",
-      "duration": "17s",
-      "sizeMb": 7.1,
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2008\\2008-12-25 (fete ecole, corse, etc, a trier 4Go et dedoubler)\\0 580.avi",
+      "label": "Fete ecole, corse, etc, a trier 4Go et dedoubler - Décembre 2008",
+      "duration": "20s",
+      "sizeMb": 4.3,
       "id": "003",
-      "filename": "IMG_8929.MOV"
+      "filename": "0 580.avi"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 13 pro Steph\\IMG_8349.MOV",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2018\\2018-05-28 (iphone so)\\IMG_3187.MOV",
+      "label": "Iphone so - Mai 2018",
+      "duration": "20s",
+      "sizeMb": 5.9,
+      "id": "004",
+      "filename": "IMG_3187.MOV"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_5970.mov",
+      "label": "Iphone steph - Octobre 2020",
+      "duration": "20s",
+      "sizeMb": 5.9,
+      "id": "005",
+      "filename": "IMG_5970.mov"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 13 pro Steph\\IMG_0122 1.MOV",
       "label": "Iphone 13 pro Steph - Juillet 2023",
       "duration": "20s",
-      "sizeMb": 7.1,
-      "id": "004",
-      "filename": "IMG_8349.MOV"
+      "sizeMb": 10,
+      "id": "006",
+      "filename": "IMG_0122 1.MOV"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_2565.MOV",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2018\\2018-05-25 (iphone steph)\\IMG_8709.MOV",
+      "label": "Iphone steph - Mai 2018",
+      "duration": "6s",
+      "sizeMb": 2.4,
+      "id": "007",
+      "filename": "IMG_8709.MOV"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\IUSL3402.MP4",
+      "label": "Iphone So - Janvier 2023",
+      "duration": "20s",
+      "sizeMb": 3,
+      "id": "008",
+      "filename": "IUSL3402.MP4"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2018\\2018-05-12 (horo ecole bulgare)\\MVI_9168.MOV",
+      "label": "Horo ecole bulgare - Mai 2018",
+      "duration": "20s",
+      "sizeMb": 7.6,
+      "id": "009",
+      "filename": "MVI_9168.MOV"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_9441.mov",
+      "label": "Iphone steph - Octobre 2020",
+      "duration": "20s",
+      "sizeMb": 8.2,
+      "id": "010",
+      "filename": "IMG_9441.mov"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\Photos boum cm2\\VID_20190702_194119.mp4",
+      "label": "2019",
+      "duration": "20s",
+      "sizeMb": 9.7,
+      "id": "011",
+      "filename": "VID_20190702_194119.mp4"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_7140.mov",
+      "label": "Iphone steph - Octobre 2020",
+      "duration": "20s",
+      "sizeMb": 7.3,
+      "id": "012",
+      "filename": "IMG_7140.mov"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\Videos gopro été 2022\\GOPR0131.MP4",
+      "label": "2022",
+      "duration": "11s",
+      "sizeMb": 3.6,
+      "id": "013",
+      "filename": "GOPR0131.MP4"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_6654.mov",
+      "label": "Iphone steph - Octobre 2020",
+      "duration": "20s",
+      "sizeMb": 2.3,
+      "id": "014",
+      "filename": "IMG_6654.mov"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 13 pro Steph\\IMG_0120.MOV",
+      "label": "Iphone 13 pro Steph - Juillet 2023",
+      "duration": "20s",
+      "sizeMb": 4.5,
+      "id": "015",
+      "filename": "IMG_0120.MOV"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\2019-06-14 (iphone steph)\\IMG_2840.MOV",
+      "label": "Iphone steph - Juin 2019",
+      "duration": "13s",
+      "sizeMb": 3.2,
+      "id": "016",
+      "filename": "IMG_2840.MOV"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-14 (iphone So)\\ISDY2981.MP4",
+      "label": "Iphone So - Janvier 2023",
+      "duration": "14s",
+      "sizeMb": 1.8,
+      "id": "017",
+      "filename": "ISDY2981.MP4"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2019\\2019-05-08 (Xiaomi Sonia)\\VID_20190316_153615.mp4",
+      "label": "Xiaomi Sonia - Mai 2019",
+      "duration": "20s",
+      "sizeMb": 1.7,
+      "id": "018",
+      "filename": "VID_20190316_153615.mp4"
+    },
+    {
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\Videos gopro été 2022\\GOPR0115.MP4",
       "label": "2022",
       "duration": "6s",
-      "sizeMb": 2.5,
-      "id": "005",
-      "filename": "IMG_2565.MOV"
+      "sizeMb": 4.5,
+      "id": "019",
+      "filename": "GOPR0115.MP4"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_5310.MOV",
-      "label": "Iphone 15 Steph - Octobre 2024",
-      "duration": "8s",
-      "sizeMb": 1.2,
-      "id": "006",
-      "filename": "IMG_5310.MOV"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2025\\Iphone 14 So (2025-07-30)\\IMG_5220.MOV",
-      "label": "Iphone 14 So - Juillet 2025",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2018\\2018-05-25 (iphone steph)\\IMG_9081.MOV",
+      "label": "Iphone steph - Mai 2018",
       "duration": "20s",
-      "sizeMb": 1.6,
-      "id": "007",
-      "filename": "IMG_5220.MOV"
+      "sizeMb": 7.9,
+      "id": "020",
+      "filename": "IMG_9081.MOV"
     },
     {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_8913.MOV",
-      "label": "Iphone 15 Steph - Octobre 2024",
-      "duration": "7s",
-      "sizeMb": 2.5,
-      "id": "008",
-      "filename": "IMG_8913.MOV"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-13 (iphone 15 Steph)\\IMG_3164.MOV",
-      "label": "Iphone 15 Steph - Octobre 2024",
-      "duration": "16s",
-      "sizeMb": 3.2,
-      "id": "009",
-      "filename": "IMG_3164.MOV"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_9486.mov",
+      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2020\\2020-10-12 (iphone steph)\\IMG_6542.mov",
       "label": "Iphone steph - Octobre 2020",
-      "duration": "8s",
-      "sizeMb": 4.3,
-      "id": "010",
-      "filename": "IMG_9486.mov"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2023\\2023-07-24 - iphone 13 pro Steph\\IMG_1269.MOV",
-      "label": "Iphone 13 pro Steph - Juillet 2023",
-      "duration": "9s",
-      "sizeMb": 1.8,
-      "id": "011",
-      "filename": "IMG_1269.MOV"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2024\\2024-10-12b (iPhone 14 So)\\UHUC7906.MP4",
-      "label": "10 12b iPhone 14 So - Octobre 2024",
-      "duration": "20s",
-      "sizeMb": 2.6,
-      "id": "012",
-      "filename": "UHUC7906.MP4"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2015\\2015-12-31 (année)\\2015-03-29 09.31.07.mov",
-      "label": "2015 - Décembre 2015",
       "duration": "5s",
-      "sizeMb": 2.4,
-      "id": "013",
-      "filename": "2015-03-29 09.31.07.mov"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2025\\2025-03-08 (fete ecole bulgare)\\Videos fete ecole bulgare 08032025\\C0047.MP4",
-      "label": "Fete ecole bulgare - Mars 2025",
-      "duration": "20s",
-      "sizeMb": 2.9,
-      "id": "014",
-      "filename": "C0047.MP4"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2022\\2023-01-08 (photos iPhone steph)\\IMG_3861.MOV",
-      "label": "2022",
-      "duration": "19s",
-      "sizeMb": 5.1,
-      "id": "015",
-      "filename": "IMG_3861.MOV"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2021\\2021-08-16 (Photos Espagne)\\gopro\\GOPR0052.MP4",
-      "label": "Gopro",
-      "duration": "20s",
-      "sizeMb": 12.3,
-      "id": "016",
-      "filename": "GOPR0052.MP4"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2025\\Iphone 14 So (2025-07-30)\\IMG_7229.MOV",
-      "label": "Iphone 14 So - Juillet 2025",
-      "duration": "15s",
-      "sizeMb": 26.4,
-      "id": "017",
-      "filename": "IMG_7229.MOV"
-    },
-    {
-      "path": "E:\\Google Drive\\_Perso\\Medias\\Photos\\_2026\\IPhone 14 So (2026-06-28)\\IMG_3955.MOV",
-      "label": "IPhone 14 So - Juin 2026",
-      "duration": "20s",
-      "sizeMb": 5.2,
-      "id": "018",
-      "filename": "IMG_3955.MOV"
+      "sizeMb": 1.2,
+      "id": "021",
+      "filename": "IMG_6542.mov"
     }
   ]
 }
